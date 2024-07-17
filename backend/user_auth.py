@@ -2,7 +2,8 @@ import re
 import hashlib
 import sqlite3
 
-#from friend_system import friend_management_menu
+
+# from friend_system import friend_management_menu
 
 def create_users_table(conn):
     cursor = conn.cursor()
@@ -16,16 +17,20 @@ def create_users_table(conn):
     ''')
     conn.commit()
 
+
 def is_valid_email(email):
     email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(email_regex, email) is not None
+
 
 def is_valid_password(password):
     password_regex = r'^(?=.*[!@#$%^&*(),.?":{}|<>])(?=.*[a-zA-Z0-9]).{8,}$'
     return re.match(password_regex, password) is not None
 
+
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
 
 def register(conn):
     print("Registration: ")
@@ -49,16 +54,18 @@ def register(conn):
             print("Invalid Password. It must be at least 8 characters long and contain at least one special character.")
             continue
         hashed_password = hash_password(password)
-        #CHANGE TO SQL COMMAND AFTER
-        cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", (username, email, hashed_password))
+        # CHANGE TO SQL COMMAND AFTER
+        cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+                       (username, email, hashed_password))
         conn.commit()
         print("Registered.")
         return username
-    
+
+
 def login(conn):
     cursor = conn.cursor()
     while True:
-        identifier = input ("Username or email: ")
+        identifier = input("Username or email: ")
         password = input("Password: ")
         cursor.execute("SELECT * FROM users WHERE username = ? OR email = ?", (identifier, identifier))
         user = cursor.fetchone()
@@ -72,8 +79,10 @@ def login(conn):
         print("User not found.")
         return None
 
+
 def spotify_login():
     print("Spotify Login")
+
 
 def view_users(conn):
     cursor = conn.cursor()
@@ -82,7 +91,8 @@ def view_users(conn):
     for username, email in cursor.fetchall():
         print(f"Username: {username}")
         print(f"Email: {email}")
-  
+
+
 def main():
     conn = sqlite3.connect('users.db')
     create_users_table(conn)
@@ -107,7 +117,7 @@ def main():
             return
         else:
             print("Invalid choice. Please try again.")
-    
+
+
 if __name__ == "__main__":
     main()
-
