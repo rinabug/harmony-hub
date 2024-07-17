@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    function drawWave(amplitude, frequency, phase, color) {
+    function drawWave(amplitude, frequency, phase, color, lineWidth, opacity) {
         ctx.beginPath();
         ctx.moveTo(0, canvas.height / 2);
 
@@ -20,27 +20,35 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.lineTo(x, y);
         }
 
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 4;
+        ctx.strokeStyle = `rgba(${color}, ${opacity})`;
+        ctx.lineWidth = lineWidth;
         ctx.stroke();
     }
 
     let phase = 0;
+    let opacityPhase = 0;
 
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        //drawWave(100, 0.05, phase, 'rgba(255, 0, 0, 0.5)'); //red
-        //drawWave(80, 0.1, phase + 45, 'rgba(0, 255, 0, 0.5)'); //green
-        drawWave(60, 0.2, phase + 90, 'rgba(0, 0, 255, 0.5)'); //blue
-        drawWave(90, 0.12, phase + 40, 'rgba(75, 0, 130, 0.5)'); //indigo
-        drawWave(50, 0.1, phase + 75, 'rgba(238, 130, 238, 0.5)'); //violet
+        // Purple color in RGB format
+        const purpleColor = '139, 99, 218';  // The RGB equivalent of the purple used in the login buttons
 
-        phase += 0.8;
+        // Draw waves with the same purple color, dynamic line widths, and animated opacity
+        for (let i = 0; i < 6; i++) {
+            const amplitude = 50 + i * 10;
+            const frequency = 0.05 + i * 0.02;
+            const lineWidth = 2 + i;
+            const opacity = 0.5 + 0.5 * Math.sin((opacityPhase + i * 20) * (Math.PI / 180));
+
+            drawWave(amplitude, frequency, phase + i * 30, purpleColor, lineWidth, opacity);
+        }
+
+        phase += 0.5; // Adjust this value to change the speed of the waves
+        opacityPhase += 1; // Adjust this value to change the speed of opacity animation
 
         requestAnimationFrame(animate);
     }
 
     animate();
 });
-

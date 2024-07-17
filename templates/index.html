@@ -6,75 +6,81 @@
     <title>Home</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <header>
-        <nav>
-            <div class="nav-left">
-                <h1>Music Buddy</h1>
-            </div>
-            <div class="nav-right">
-                <ul>
-                    <li><a>Home</a></li>
-                    <li><a href="{{ url_for('discover') }}">Discover</a></li>
-                    <li><a href="{{ url_for('collab') }}">Collab</a></li>
-                    <li><a href="{{ url_for('profile') }}" class="nav-right">Profile</a></li>
-                </ul>
-            </div>
-        </nav>
+        <button class="menu-toggle" id="menu-toggle">&#9776;</button>
+        <h1>Music Buddy</h1>
     </header>
 
-    <section class="welcome-section">
-        <div class="container">
-            <h1>Welcome, {{ username }}!</h1>
-            <p>This is your personalized user home page.</p>
-        </div>
-    </section>
-    
-    <main class="main-container">
-        <section class="leaderboard-section">
-            <div class="container leaderboard-box">
-                <h2>Friends Leaderboard</h2>
-                <div id="friendsLeaderboardContent">
-                    <!-- Friends leaderboard content will be loaded dynamically -->
-                </div>
+    <div id="main-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-music"></i>
+                <span>Harmony Hub</span>
             </div>
-            <div class="container leaderboard-box">
-                <h2>Global Leaderboard</h2>
-                <div id="globalLeaderboardContent">
-                    <!-- Global leaderboard content will be loaded dynamically -->
-                </div>
-            </div>
-        </section>
+            <nav>
+                <ul>
+                    <li><a href=""><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="{{ url_for('discover') }}"><i class="fas fa-search"></i> Discover</a></li>
+                    <li><a href="{{ url_for('collab') }}"><i class="fas fa-users"></i> Collab</a></li>
+                    <li><a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profile</a></li>
+                </ul>
+            </nav>
+            <a href="{{ url_for('logout') }}" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </aside>
 
-        <section class="trivia-section">
-            <div class="Trivia-section">
-                <h2>Trivia</h2>
-                <div id="triviaContent">
-                    {% if question %}
-                        <p id="question">{{ question }}</p>
-                        <div id="options">
-                            {% if options %}
-                                {% for letter, option in options.items() %}
-                                    <button class="trivia-option button" data-answer="{{ letter }}">{{ letter }}) {{ option }}</button>
-                                {% endfor %}
+        <main class="main-content" id="main-content">
+            <section class="welcome-section">
+                <div class="container">
+                    <h1>Welcome, {{ username }}!</h1>
+                    <p>This is your personalized user home page.</p>
+                </div>
+            </section>
+            
+            <section class="main-container">
+                <section class="leaderboard-section">
+                    <div class="container leaderboard-box">
+                        <h2>Friends Leaderboard</h2>
+                        <div id="friendsLeaderboardContent">
+                            <!-- Friends leaderboard content will be loaded dynamically -->
+                        </div>
+                    </div>
+                    <div class="container leaderboard-box">
+                        <h2>Global Leaderboard</h2>
+                        <div id="globalLeaderboardContent">
+                            <!-- Global leaderboard content will be loaded dynamically -->
+                        </div>
+                    </div>
+                </section>
+
+                <section class="trivia-section">
+                    <div class="Trivia-section">
+                        <h2>Trivia</h2>
+                        <div id="triviaContent">
+                            {% if question %}
+                                <p id="question">{{ question }}</p>
+                                <div id="options">
+                                    {% if options %}
+                                        {% for letter, option in options.items() %}
+                                            <button class="trivia-option button" data-answer="{{ letter }}">{{ letter }}) {{ option }}</button>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p>No options available.</p>
+                                    {% endif %}
+                                </div>
+                                <p id="result"></p>
+                                <button id="nextQuestion" class="button" style="display: none;">Next Question</button>
                             {% else %}
-                                <p>No options available.</p>
+                                <p>No trivia question available.</p>
                             {% endif %}
                         </div>
-                        <p id="result"></p>
-                        <button id="nextQuestion" class="button" style="display: none;">Next Question</button>
-                    {% else %}
-                        <p>No trivia question available.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <a href="{{ url_for('logout') }}" class="logout">Logout</a>
-    </footer>
+                    </div>
+                </section>
+            </section>
+        </main>
+    </div>
 
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
     <script src="{{ url_for('static', filename='js/leaderboard.js') }}"></script>
