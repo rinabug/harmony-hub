@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Music Buddy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <!-- Navbar or header content -->
+        <nav>
+            <h1>Music Buddy</h1>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="{{ url_for('discover') }}">Discover</a></li>
+                <li><a href="{{ url_for('collab') }}">Collab</a></li>
+                <li><a>Profile</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="profile-section">
+        <div class="container">
+            <h1>Welcome, {{ username }}!</h1>
+            <p>...</p>
+        </div>
+    </section>
+
+    <main class="main-container">
+        <!-- Main content area -->
+        <section id="friends-section" class="friends-section">
+            <div class="container">
+                <h2>Your Friends</h2>
+                <ul id="friends-list">
+                    {% for friend in friends %}
+                        <li>{{ friend }}</li>
+                    {% endfor %}
+                </ul>
+                <div id="friendsContent">
+                    <!-- friend content will be loaded dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <section id="friend-requests">
+            <div class="container">
+                <h2>Friend Requests</h2>
+                <ul id="friend-requests-list"></ul>
+            </div>
+        </section>
+
+        <section id="send-friend-request">
+            <div class="container">
+                <h2>Send Friend Request</h2>
+                <input type="text" id="friend-username" placeholder="Enter username">
+                <button id="send-request-btn">Send Request</button>
+            </div>
+        </section>
+
+        <section class="badges-section">
+            <div class="container">
+                <h2>Badges</h2>
+                <div id="badgesContent">
+                    {% if badges %}
+                        <ul>
+                        {% for badge in badges %}
+                            <li>{{ badge[0] }} - Earned on {{ badge[1] }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No badges earned yet. Keep playing to earn badges!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <!-- Footer content -->
+        <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+</body>
+</html>
