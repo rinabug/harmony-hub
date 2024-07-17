@@ -25,6 +25,7 @@
                     <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a></li>
                     <li><a href="{{ url_for('discover') }}"><i class="fas fa-search"></i> Discover</a></li>
                     <li><a href="{{ url_for('collab') }}"><i class="fas fa-users"></i> Collab</a></li>
+                    <li><a href="{{ url_for('game') }}"><i class="fas fa-gamepad"></i> Games</a></li>
                     <li><a href=""><i class="fas fa-user"></i> Profile</a></li>
                 </ul>
             </nav>
@@ -35,55 +36,11 @@
             <section class="profile-section">
                 <div class="container">
                     <h1>Welcome, {{ username }}!</h1>
-                    <p>...</p>
+                    <p>View, customize, and edit profile!</p>
                 </div>
             </section>
 
-            <section id="friends-section" class="friends-section">
-                <div class="container">
-                    <h2>Your Friends</h2>
-                    <ul id="friends-list">
-                        {% for friend in friends %}
-                            <li>{{ friend }}</li>
-                        {% endfor %}
-                    </ul>
-                    <div id="friendsContent">
-                        <!-- friend content will be loaded dynamically -->
-                    </div>
-                </div>
-            </section>
-
-            <section id="friend-requests">
-                <div class="container">
-                    <h2>Friend Requests</h2>
-                    <ul id="friend-requests-list"></ul>
-                </div>
-            </section>
-
-            <section id="send-friend-request">
-                <div class="container">
-                    <h2>Send Friend Request</h2>
-                    <input type="text" id="friend-username" placeholder="Enter username">
-                    <button id="send-request-btn">Send Request</button>
-                </div>
-            </section>
-
-            <section class="badges-section">
-                <div class="container">
-                    <h2>Badges</h2>
-                    <div id="badgesContent">
-                        {% if badges %}
-                            <ul>
-                            {% for badge in badges %}
-                                <li>{{ badge[0] }} - Earned on {{ badge[1] }}</li>
-                            {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>No badges earned yet. Keep playing to earn badges!</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </section>
+            
         </main>
     </div>
 

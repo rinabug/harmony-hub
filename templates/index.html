@@ -25,6 +25,7 @@
                     <li><a href=""><i class="fas fa-home"></i> Home</a></li>
                     <li><a href="{{ url_for('discover') }}"><i class="fas fa-search"></i> Discover</a></li>
                     <li><a href="{{ url_for('collab') }}"><i class="fas fa-users"></i> Collab</a></li>
+                    <li><a href="{{ url_for('game') }}"><i class="fas fa-gamepad"></i> Games</a></li>
                     <li><a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profile</a></li>
                 </ul>
             </nav>
@@ -39,46 +40,6 @@
                 </div>
             </section>
             
-            <section class="main-container">
-                <section class="leaderboard-section">
-                    <div class="container leaderboard-box">
-                        <h2>Friends Leaderboard</h2>
-                        <div id="friendsLeaderboardContent">
-                            <!-- Friends leaderboard content will be loaded dynamically -->
-                        </div>
-                    </div>
-                    <div class="container leaderboard-box">
-                        <h2>Global Leaderboard</h2>
-                        <div id="globalLeaderboardContent">
-                            <!-- Global leaderboard content will be loaded dynamically -->
-                        </div>
-                    </div>
-                </section>
-
-                <section class="trivia-section">
-                    <div class="Trivia-section">
-                        <h2>Trivia</h2>
-                        <div id="triviaContent">
-                            {% if question %}
-                                <p id="question">{{ question }}</p>
-                                <div id="options">
-                                    {% if options %}
-                                        {% for letter, option in options.items() %}
-                                            <button class="trivia-option button" data-answer="{{ letter }}">{{ letter }}) {{ option }}</button>
-                                        {% endfor %}
-                                    {% else %}
-                                        <p>No options available.</p>
-                                    {% endif %}
-                                </div>
-                                <p id="result"></p>
-                                <button id="nextQuestion" class="button" style="display: none;">Next Question</button>
-                            {% else %}
-                                <p>No trivia question available.</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </section>
-            </section>
         </main>
     </div>
 

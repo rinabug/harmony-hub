@@ -28,7 +28,11 @@ def discover():
 
 @app.route('/collab')
 def collab():
-    return render_template('collab.html')  
+    return render_template('collab.html')
+
+@app.route('/game')
+def game():
+    return render_template('game.html')   
 
 @app.route('/logout')
 def logout():

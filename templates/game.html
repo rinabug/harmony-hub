@@ -1,9 +1,10 @@
+<!--file for all games, challenges, and leaderboards-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Collab</title>
+    <title>Games</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -25,7 +26,7 @@
                     <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a></li>
                     <li><a href="{{ url_for('discover') }}"><i class="fas fa-search"></i> Discover</a></li>
                     <li><a href="{{ url_for('collab') }}"><i class="fas fa-users"></i> Collab</a></li>
-                    <li><a href="{{ url_for('game') }}"><i class="fas fa-gamepad"></i> Games</a></li>
+                    <li><a href=""><i class="fas fa-gamepad"></i> Games</a></li>
                     <li><a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profile</a></li>
                 </ul>
             </nav>
@@ -33,17 +34,19 @@
         </aside>
 
         <main class="main-content" id="main-content">
-            <section class="collab-section">
+            <section class="games-section">
                 <div class="container">
-                    <h1>Collab</h1>
-                    <p>Create and Chat with friends</p>
+                    <h1>Games</h1>
+                    <p>Play and enjoy music and movie-related games!</p>
                 </div>
             </section>
+
+            <!-- Add your games content here -->
 
         </main>
     </div>
 
-    <script src="{{ url_for('static', filename='js/collab.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/games.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const menuToggle = document.getElementById('menu-toggle');

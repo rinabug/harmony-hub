@@ -25,6 +25,7 @@
                     <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a></li>
                     <li><a href="{{ url_for('discover') }}"><i class="fas fa-search"></i> Discover</a></li>
                     <li><a href="{{ url_for('collab') }}"><i class="fas fa-users"></i> Collab</a></li>
+                    <li><a href="{{ url_for('game') }}"><i class="fas fa-gamepad"></i> Games</a></li>
                     <li><a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profile</a></li>
                 </ul>
             </nav>
@@ -35,81 +36,10 @@
             <section class="Discover-section">
                 <div class="container">
                     <h1>Discover</h1>
-                    <p>new music, artists, and concerts</p>
+                    <p>new music, artists, movies, shows and concerts</p>
                 </div>
             </section>
 
-            <section class="Input-section">
-                <div class="container">
-                    <h2>Find Concerts</h2>
-                    <form action="{{ url_for('discover') }}" method="POST">
-                        <label for="location">Location:</label>
-                        <input type="text" id="location" name="location" required>
-                        
-                        <label for="genre">Favorite Genre:</label>
-                        <input type="text" id="genre" name="genre" required>
-                        
-                        <label for="radius">Radius (miles):</label>
-                        <input type="number" id="radius" name="radius" required>
-                        
-                        <button type="submit">Get Recommendations</button>
-                    </form>
-                </div>
-            </section>
-
-            <section class="Concert-section">
-                <div class="container">
-                    <h2>Concerts</h2>
-                    <div id="chatgptRecommendation">
-                        <h3>Personalized Recommendations</h3>
-                        {% if chatgpt_recommendation %}
-                            <p>{{ chatgpt_recommendation }}</p>
-                        {% else %}
-                            <p>No personalized recommendation available at this time.</p>
-                        {% endif %}
-                    </div>
-                    <div id="allConcerts">
-                        <h3>All Upcoming Concerts</h3>
-                        {% if all_events %}
-                            <ul>
-                            {% for event in all_events %}
-                                <li>{{ event }}</li>
-                            {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>No upcoming concerts found.</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </section>
-
-            <section class="Music-section">
-                <div class="container">
-                    <h2>Music Recommendations</h2>
-                    <div id="musicContent">
-                        {% if music_recommendations %}
-                            <ul>
-                            {% for track in music_recommendations %}
-                                <li>
-                                    <h3>{{ track.name }}</h3>
-                                    <p>Artist: {{ track.artist }}</p>
-                                    <p>Album: {{ track.album }}</p>
-                                    {% if track.preview_url %}
-                                        <audio controls>
-                                            <source src="{{ track.preview_url }}" type="audio/mpeg">
-                                            Your browser does not support the audio element.
-                                        </audio>
-                                    {% endif %}
-                                    <a href="{{ track.external_url }}" target="_blank">Open in Spotify</a>
-                                </li>
-                            {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>No music recommendations available. Try listening to more music!</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </section>
         </main>
     </div>
 

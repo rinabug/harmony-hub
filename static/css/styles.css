@@ -379,7 +379,7 @@ a:hover {
 }
 
 /* Sections */
-.Discover-section, .collab-section, .profile-section {
+.Discover-section, .collab-section, .profile-section, .games-section {
     color: #333;
     padding: 50px 0;
     text-align: center;
@@ -389,96 +389,16 @@ a:hover {
     margin-bottom: 30px;
 }
 
-.Discover-section, .collab-section, .profile-section h1 {
+.Discover-section, .collab-section, .profile-section, .games-section h1 {
     font-size: 3em;
     margin-bottom: 20px;
 }
 
-.Discover-section, .collab-section, .profile-section p {
+.Discover-section, .collab-section, .profile-section, .games-section p {
     font-size: 1.2em;
     line-height: 1.5;
 }
 
-.leaderboard-section, .trivia-section, .Concert-section, .Music-section, .playlist-section, .chat-section, .friends-section, .badges-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 30px;
-    border-radius: 12px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
-    width: calc(50% - 60px);
-    height: 600px;
-    overflow-y: auto;
-}
-
-.leaderboard-section, .trivia-section, .Concert-section, .Music-section, .playlist-section, .chat-section, .friends-section, .badges-section:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
-
-/* Leaderboard Box */
-.leaderboard-box {
-    width: 100%;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 12px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Discover Page Styles */
-.Input-section, .Trivia-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    background-color: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
-}
-
-.Input-section form, .Trivia-section form {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 400px;
-}
-
-.Input-section label, .Trivia-section label {
-    margin-bottom: 8px;
-    font-weight: bold;
-}
-
-.Input-section input, .Trivia-section input {
-    margin-bottom: 16px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-.Input-section button, .Trivia-section button {
-    padding: 10px;
-    background-color: #8B63DA;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 16px;
-}
-
-.Input-section button:hover, .Trivia-section button:hover {
-    background-color: #CB98ED;
-}
-
-.Concert-section, .Music-section {
-    overflow-y: auto;
-    max-height: 400px;
-}
 
 /* Parent container for sections */
 .main-container {
@@ -527,98 +447,6 @@ a:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Footer */
-footer {
-    text-align: center;
-    padding: 20px;
-    background-color: #CB98ED;
-    color: white;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 50px;
-}
-
-.logout {
-    padding: 10px 20px;
-    background-color: #8B63DA;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    text-decoration: none;
-    font-size: 16px;
-}
-
-.logout:hover {
-    background-color: white;
-}
-
-/* Messaging Section */
-.chat-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 30px;
-    border-radius: 12px;
-    background-color: #ffffff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
-}
-
-.chat-section h2 {
-    font-size: 2em;
-    margin-bottom: 20px;
-}
-
-#chatContent {
-    max-height: 300px; /* Adjust max height as needed */
-    overflow-y: auto;
-    width: 100%;
-    padding: 10px;
-    background-color: #f5f5f5;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-#chatContent > div {
-    background-color: #ffffff;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-#chatForm {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-}
-
-#messageInput {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-bottom: 10px;
-}
-
-#chatForm button {
-    padding: 10px 20px;
-    background-color: #8B63DA;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-#chatForm button:hover {
-    background-color: #CB98ED;
-}
 
 /* Responsive Design */
 @media (max-width: 768px) {
