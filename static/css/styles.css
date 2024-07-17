@@ -378,6 +378,60 @@ a:hover {
     line-height: 1.5;
 }
 
+/* Section Styles */
+section {
+    margin-bottom: 40px;
+}
+
+.activity-section, .featured-playlists-section, .top-charts-section, .recommendations-section, .messaging-section, .friend-suggestions-section {
+    background: white;
+    color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+    width: 90%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.container h2 {
+    margin-bottom: 20px;
+    font-size: 2em;
+}
+
+.container p {
+    font-size: 1.2em;
+    line-height: 1.5;
+}
+
+.activity-content, .playlist-content, .chart-content, .recommendations-content, .messaging-content, .suggestions-content {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+.activity-item, .playlist-item, .chart-item, .recommendation-item, .message-item, .suggestion-item {
+    background: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 10px;
+    padding: 20px;
+    width: 30%;
+    text-align: left;
+}
+
+.activity-item img, .playlist-item img, .chart-item img, .recommendation-item img, .message-item img, .suggestion-item img {
+    width: 100%;
+    border-radius: 10px;
+}
+
+.activity-info, .playlist-info, .chart-info, .recommendation-info, .message-info, .suggestion-info {
+    margin-top: 10px;
+}
+
 /* Sections */
 .Discover-section, .collab-section, .profile-section, .games-section {
     color: #333;
