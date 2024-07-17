@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collab</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Retain original styles */
+        .playlist-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .playlist-item img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+            border-radius: 50%;
+        }
+        .playlist-item a {
+            text-decoration: none;
+            color: #333;
+        }
+
+        /* New styles for global chat */
+        .message-item {
+            margin-bottom: 10px;
+        }
+        .message-item .username {
+            font-weight: bold;
+        }
+        .message-item .timestamp {
+            font-size: 0.8em;
+            color: #666;
+        }
+        #chatContent {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <!-- Navbar or header content -->
+        <nav>
+            <h1>Music Buddy</h1>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="{{ url_for('discover') }}">Discover</a></li>
+                <li><a>Collab</a></li>
+                <li><a href="{{ url_for('profile') }}">Profile</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <section class="collab-section">
+        <div class="container">
+            <h1>Collab</h1>
+            <p>Create and view playlists with friends</p>
+            <p>Chat with everyone!</p>
+        </div>
+    </section>
+
+    <main class="main-container">
+        <!-- Main content area -->
+        <section class="playlist-section">
+            <div class="container">
+                <h3>Your Top Playlists</h3>
+                <div class="playlist-container">
+                  {% for name, image_url, url in playlists_info %}
+                    <div class="playlist-item" id="playlistContent">
+                      <img src="{{ image_url }}" alt="{{ name }}" class="playlist-image">
+                      <div class="playlist-details">
+                        <h4><a href="{{ url }}" target="_blank">{{ name }}</a></h4>
+                        <!-- Additional details or controls if needed -->
+                      </div>
+                    </div>
+                  {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section class="chat-section">
+            <div class="container">
+                <h2>Global Chat</h2>
+                <div id="chatContent">
+                    <!-- Chat content will be loaded dynamically -->
+                </div>
+                <!-- Form to send messages -->
+                <form id="chatForm">
+                    <textarea name="message" id="messageInput" placeholder="Type your message"></textarea>
+                    <button type="submit">Send</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <!-- Footer content -->
+        <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/collab.js') }}"></script>
+</body>
+</html>

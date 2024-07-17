@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <canvas id="backgroundCanvas"></canvas>
+    <div class="start-page-container">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="site-logo">
+        <h1>Harmony Hub</h1>
+        <div class="button-container">
+            <a href="{{ url_for('login') }}" class="button button-primary">Login</a>
+            <a href="{{ url_for('signup') }}" class="button button-primary">Signup</a>
+        </div>
+        <!-- <div class="secondary-button-container">
+            <button id="loginSpotify" class="button button-secondary">Login with Spotify</button>
+        </div> !-->
+    </div>
+    <script src="{{ url_for('static', filename='js/start-page.js') }}"></script>
+</body>
+</html>
