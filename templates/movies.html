@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies - Music Buddy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>Music Buddy</h1>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="{{ url_for('discover') }}">Discover</a></li>
+                <li><a href="{{ url_for('collab') }}">Collab</a></li>
+                <li><a href="{{ url_for('profile') }}">Profile</a></li>
+                <li><a href="{{ url_for('movies') }}">Movies</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main-container">
+        <section id="wishlist-section">
+            <h2>Movie Wishlist</h2>
+            <input type="text" id="movie-title" placeholder="Enter movie title">
+            <button id="add-to-wishlist">Add to Wishlist</button>
+            <ul id="wishlist"></ul>
+        </section>
+
+        <section id="reviews-section">
+            <h2>Movie Reviews</h2>
+            <form id="review-form">
+                <input type="text" id="review-movie-title" placeholder="Movie title" required>
+                <input type="number" id="rating" min="1" max="5" placeholder="Rating (1-5)" required>
+                <textarea id="review-text" placeholder="Your review" required></textarea>
+                <button type="submit">Submit Review</button>
+            </form>
+            <div id="reviews"></div>
+        </section>
+
+        <section id="trivia-section">
+            <h2>Movie Trivia</h2>
+            <button id="get-trivia">Get Trivia Question</button>
+            <div id="trivia-question"></div>
+        </section>
+
+        <section id="recommendations-section">
+            <h2>Movie Recommendations</h2>
+            <button id="get-recommendations">Get Recommendations</button>
+            <ul id="recommendations"></ul>
+        </section>
+    </main>
+
+    <footer>
+        <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/movies.js') }}"></script>
+</body>
+</html>

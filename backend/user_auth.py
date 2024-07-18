@@ -14,6 +14,38 @@ def create_users_table(conn):
         password TEXT NOT NULL
     )
     ''')
+    
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS movies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        release_year INTEGER,
+        director TEXT
+    )
+    ''')
+    
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS wishlists (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        movie_id INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users (id),
+        FOREIGN KEY (movie_id) REFERENCES movies (id)
+    )
+    ''')
+    
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        movie_id INTEGER,
+        rating INTEGER,
+        review_text TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id),
+        FOREIGN KEY (movie_id) REFERENCES movies (id)
+    )
+    ''')
+    
     conn.commit()
 
 def is_valid_email(email):

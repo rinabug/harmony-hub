@@ -6,14 +6,16 @@ from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
 from backend.user_auth import create_users_table, is_valid_email, is_valid_password, hash_password
 from backend.friend_system import create_friend_tables, send_friend_request, view_friend_requests, accept_friend_request, view_friends
-from backend.trivia import create_leaderboard_table, get_leaderboard, generate_trivia_question, update_score
+from backend.trivia import create_leaderboard_table, get_leaderboard, generate_trivia_question, update_score, generate_movie_trivia_question
 from backend.badges import create_badges_table, get_user_badges, check_and_award_badges
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
+from backend.movie_functions import add_to_wishlist, get_wishlist, add_review, get_reviews, get_movie_info, get_movie_recommendations
+import random
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
-DATABASE = 'users.db'
+DATABASE = 'users_test.db'
 
 client_id = '908db28b7d8e4d03888632068918bff1'
 client_secret = '92919a8126964ba5b4da358d97c729ef'
@@ -50,12 +52,24 @@ def create_messages_table(conn):
 @app.before_request
 def initialize_database():
     conn = get_db_connection()
-    create_users_table(conn)
+    create_users_table(conn) #users, movies, wishlists, reviews
     create_friend_tables(conn)
     create_leaderboard_table(conn)
     create_badges_table(conn)
-    create_messages_table(conn)  #ADD THIS LINE
+    create_messages_table(conn)
     conn.close()
+def debug_check_tables():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cursor.fetchall()
+    print("Tables in the database:", [table[0] for table in tables])
+    conn.close()
+
+# Call this function after your database is initialized
+debug_check_tables()
+
+
 #ADDED BELOW
 @app.route('/get_global_messages')
 def get_global_messages():
@@ -491,6 +505,82 @@ def send_friend_message():
         return jsonify({'success': True, 'message': 'Message sent successfully.'})
     else:
         return jsonify({'success': False, 'message': 'Failed to send message.'}), 500
+
+@app.route('/movies')
+def movies():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('movies.html')
+
+@app.route('/add_to_wishlist', methods=['POST'])
+def add_to_wishlist_route():
+    if 'username' not in session:
+        return jsonify({"status": "error", "message": "Not logged in"})
+    movie_title = request.form.get('movie_title')
+    conn = get_db_connection()
+    success = add_to_wishlist(conn, session['username'], movie_title)
+    conn.close()
+    if success:
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"status": "error", "message": "Movie not found"})
+
+@app.route('/get_wishlist')
+def get_wishlist_route():
+    if 'username' not in session:
+        return jsonify({"status": "error", "message": "Not logged in"})
+    conn = get_db_connection()
+    wishlist = get_wishlist(conn, session['username'])
+    conn.close()
+    return jsonify({"status": "success", "wishlist": wishlist})
+
+@app.route('/add_review', methods=['POST'])
+def add_review_route():
+    if 'username' not in session:
+        return jsonify({"status": "error", "message": "Not logged in"})
+    movie_title = request.form.get('movie_title')
+    rating = request.form.get('rating')
+    review_text = request.form.get('review_text')
+    conn = get_db_connection()
+    success = add_review(conn, session['username'], movie_title, rating, review_text)
+    conn.close()
+    if success:
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"status": "error", "message": "Movie not found"})
+
+@app.route('/get_reviews')
+def get_reviews_route():
+    if 'username' not in session:
+        return jsonify({"status": "error", "message": "Not logged in"})
+    conn = get_db_connection()
+    reviews = get_reviews(conn, session['username'])
+    conn.close()
+    return jsonify({"status": "success", "reviews": reviews})
+
+@app.route('/movie_recommendations')
+def movie_recommendations():
+    if 'username' not in session:
+        return jsonify({"status": "error", "message": "Not logged in"})
+    recommendations = get_movie_recommendations(session['username'])
+    return jsonify({"status": "success", "recommendations": recommendations})
+
+@app.route('/movie_trivia')
+def movie_trivia():
+    if 'username' not in session:
+        return jsonify({"status": "error", "message": "Not logged in"})
+    conn = get_db_connection()
+    wishlist = get_wishlist(conn, session['username'])
+    reviews = get_reviews(conn, session['username'])
+    conn.close()
+    all_movies = wishlist + reviews
+    if all_movies:
+        movie = random.choice(all_movies)
+        question = generate_movie_trivia_question(movie[0])  # Pass the movie title
+        return jsonify({"status": "success", "question": question})
+    else:
+        return jsonify({"status": "error", "message": "No movies in wishlist or reviews"})
+
 
 # Function to get Spotify token from session
 def get_spotify_token():

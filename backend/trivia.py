@@ -99,6 +99,18 @@ def generate_trivia_question(artists, asked_questions=[]):
         print(f"Error generating trivia question: {e}")
         return None
 
+def generate_movie_trivia_question(movie_title):
+    prompt = f"Generate a movie trivia question about the movie '{movie_title}' with four multiple-choice options. Format the response as: Question\\n A) Option\\n B) Option\\n C) Option\\n D) Option\\n Correct Answer: Letter"
+
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a movie trivia expert."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return response.choices[0].message.content
+
 def play_trivia(conn, username):
     print("\nWelcome to Trivia!")
     score = 0
