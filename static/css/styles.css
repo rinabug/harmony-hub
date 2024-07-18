@@ -1,0 +1,625 @@
+/* General Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background: linear-gradient(120deg, #5680E9, #84CEEB, #5AB9EA, #C1C8E4, #8860D0);
+    background-size: 150% 150%;
+    animation: gradientAnimation 15s ease infinite;
+}
+
+#main-container {
+    display: flex;
+    flex: 1;
+    transition: margin-left 0.3s ease, padding-left 0.3s ease;
+}
+
+#main-container.collapsed {
+    margin-left: 250px;
+}
+
+/* Sidebar */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 250px;
+    height: 100%;
+    background-color: rgba(86, 128, 233, 0.9); /* Updated color */
+    color: #ffffff;
+    transition: transform 0.3s ease;
+    transform: translateX(-250px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+}
+
+.sidebar.open {
+    transform: translateX(0);
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.5em;
+    margin-bottom: 20px;
+}
+
+.sidebar nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sidebar nav ul {
+    list-style-type: none;
+    padding: 0;
+    width: 100%;
+}
+
+.sidebar nav ul li {
+    margin: 20px 0;
+    width: 100%;
+    text-align: center;
+}
+
+.sidebar nav ul li a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 18px;
+    transition: color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    border-radius: 5px;
+}
+
+.sidebar nav ul li a:hover {
+    background-color: #84CEEB; /* Updated color */
+}
+
+/* Logout Button */
+.logout {
+    background-color: rgba(86, 128, 233, 0.9); /* Updated color */
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 18px;
+    transition: color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+.logout:hover {
+    background-color: white; 
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    margin-left: 0;
+    transition: margin-left 0.3s ease;
+    padding: 40px;
+    padding-top: 80px; /* Adjust for header height */
+    overflow-y: auto;
+}
+
+.main-content.expanded {
+    margin-left: 250px; /* Match the sidebar width */
+}
+
+/* Header */
+header {
+    background-color: rgba(90, 185, 234, 0.9); /* Updated color */
+    color: #000000;
+    padding: 10px;
+    text-align: center;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+    transition: margin-left 0.3s ease; /* Add transition for smooth movement */
+}
+
+header.expanded {
+    margin-left: 500px; /* Adjust this value to match the sidebar width */
+}
+
+.menu-toggle {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    background-color: transparent;
+    border: none;
+    font-size: 24px;
+    color: #000;
+    cursor: pointer;
+    outline: none;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+/* Canvas Background */
+#backgroundCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+
+/* Links */
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: #5680E9; /* Updated color */
+}
+
+/* Start Page Styles */
+@keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.waves {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    min-height: 100px;
+    max-height: 150px;
+}
+
+.parallax > use {
+    animation: moveWaves 10s cubic-bezier(.55,.5,.45,.5) infinite;
+}
+
+@keyframes moveWaves {
+    0% {
+        transform: translate3d(-90px,0,0);
+    }
+    100% {
+        transform: translate3d(85px,0,0);
+    }
+}
+
+.start-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    padding: 20px;
+    background: none; /* Remove the white background */
+}
+
+.site-logo {
+    display: block;
+    max-width: 400px;
+    margin-bottom: 16px;
+}
+
+.start-page-container h1 {
+    margin-bottom: 20px;
+    color: #fff;
+    font-size: 2.5em;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.secondary-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    background-color: #5680E9;
+    border: none;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.button:hover {
+    background-color: #84CEEB;
+    transform: translateY(-2px);
+}
+
+.button:active {
+    background-color: #84CEEB;
+    transform: translateY(0);
+}
+
+/* Login & Signup Pages */
+.login-container,
+.register-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: none; /* Remove the white background */
+}
+
+.login-container h2,
+.register-container h2 {
+    margin-bottom: 20px;
+}
+
+.form-bubble {
+    background: white; 
+    padding: 40px;
+    width: 400px;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login-container form,
+.register-container form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.login-container input,
+.register-container input {
+    margin-bottom: 16px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.login-container button,
+.register-container button {
+    padding: 10px;
+    background-color: #5680E9; /* Updated color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 16px;
+}
+
+.login-container button:hover,
+.register-container button:hover {
+    background-color: #5AB9EA; /* Updated color */
+}
+
+/* Home Link Button */
+.B-home {
+    color: #5680E9; /* Updated color */
+    border: none;
+    cursor: pointer;
+    margin-bottom: 16px;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.B-home:hover {
+    color: #333;
+}
+
+/* Welcome Section */
+.welcome-section {
+    color: #333;
+    padding: 50px 0;
+    text-align: center;
+    background: linear-gradient(to right, #5680E9, #5AB9EA); /* Updated gradient */
+    color: white;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.welcome-section h1 {
+    font-size: 3em;
+    margin-bottom: 20px;
+}
+
+.welcome-section p {
+    font-size: 1.2em;
+    line-height: 1.5;
+}
+
+/* Section Styles */
+section {
+    margin-bottom: 40px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Activity Section Styles */
+.activity-section .activity-item,
+.featured-playlists-section .playlist-item,
+.top-charts-section .chart-item,
+.recommendations-section .recommendation-item,
+.messaging-section .message-item,
+.friend-suggestions-section .suggestion-item {
+    background: white; /* Slightly transparent white */
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 10px;
+    padding: 20px;
+    width: 30%;
+    text-align: left;
+}
+
+.activity-section img,
+.featured-playlists-section img,
+.top-charts-section img,
+.recommendations-section img,
+.messaging-section img,
+.friend-suggestions-section img {
+    width: 100%;
+    border-radius: 10px;
+}
+
+/* Section Headers */
+.container {
+    width: 90%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.container h2 {
+    margin-bottom: 20px;
+    font-size: 2em;
+}
+
+.container p {
+    font-size: 1.2em;
+    line-height: 1.5;
+}
+
+/* Discover, Collab, Profile, and Games Sections */
+.discover-section,
+.collab-section,
+.profile-section,
+.games-section {
+    color: #333;
+    padding: 50px 0;
+    text-align: center;
+    background: linear-gradient(to right, #5680E9, #5AB9EA); /* Updated gradient */
+    color: white;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.discover-section h1,
+.collab-section h1,
+.profile-section h1,
+.games-section h1 {
+    font-size: 3em;
+    margin-bottom: 20px;
+}
+
+.discover-section p,
+.collab-section p,
+.profile-section p,
+.games-section p {
+    font-size: 1.2em;
+    line-height: 1.5;
+}
+
+/* Input and Trivia Section Styles */
+.input-section,
+.trivia-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.input-section form,
+.trivia-section form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 400px;
+}
+
+.input-section label,
+.trivia-section label {
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.input-section input,
+.trivia-section input {
+    margin-bottom: 16px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.input-section button,
+.trivia-section button {
+    padding: 10px;
+    background-color: #5680E9; /* Updated color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 16px;
+}
+
+.input-section button:hover,
+.trivia-section button:hover {
+    background-color: #5AB9EA; /* Updated color */
+}
+
+/* Sections with Scrollable Content */
+.concert-section,
+.music-section,
+.movie-section,
+.leaderboard-section,
+.chat-section,
+.friends-section,
+.badges-section {
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.leaderboard-section,
+.trivia-section,
+.six-degrees,
+.concert-section,
+.music-section,
+.playlist-section,
+.chat-section,
+.friends-section,
+.badges-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    width: calc(50% - 60px);
+    height: 600px;
+    overflow-y: auto;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+/* Bento Box Styles */
+.bento-box-section {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.bento-box-container {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 20px;
+}
+
+.bento-item {
+    background: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+    border-radius: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+}
+
+.bento-item.large {
+    grid-column: span 8;
+}
+
+.bento-item.medium {
+    grid-column: span 4;
+}
+
+.bento-item.small {
+    grid-column: span 3;
+}
+
+.bento-item h2 {
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-container > section {
+        flex: 1 1 100%;
+    }
+    
+    .leaderboard-section,
+    .trivia-section,
+    .concert-section,
+    .music-section,
+    .playlist-section,
+    .chat-section,
+    .friends-section,
+    .badges-section {
+        width: 100%;
+    }
+
+    #main-container {
+        grid-template-columns: 200px 1fr;
+    }
+
+    .sidebar nav ul {
+        padding: 10px;
+    }
+
+    .sidebar nav ul li {
+        margin: 10px 0;
+    }
+
+    .sidebar {
+        width: 200px;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .main-content.expanded {
+        margin-left: 200px;
+    }
+}
+
