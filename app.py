@@ -5,8 +5,14 @@ from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
 from backend.user_auth import create_users_table, is_valid_email, is_valid_password, hash_password
+<<<<<<< HEAD
 from backend.friend_system import create_friend_tables, send_friend_request, view_friend_requests, accept_friend_request, view_friends
 from backend.trivia import create_leaderboard_table, get_leaderboard, generate_trivia_question, update_score, generate_movie_trivia_question
+=======
+from backend.friend_system import create_friend_tables, send_friend_request, view_friend_requests, \
+    accept_friend_request, view_friends
+from backend.trivia import create_leaderboard_table, get_leaderboard, generate_trivia_question, update_score
+>>>>>>> bac29378a600a5745e76c13fc993de88050c6c21
 from backend.badges import create_badges_table, get_user_badges, check_and_award_badges
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
@@ -33,10 +39,13 @@ sp_oauth = SpotifyOAuth(
     show_dialog=True
 )
 
+
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     return conn
-#ADDED MESSAGES TABLE!!!!!!!!!!
+
+
+# ADDED MESSAGES TABLE!!!!!!!!!!
 def create_messages_table(conn):
     cursor = conn.cursor()
     cursor.execute('''
@@ -49,6 +58,7 @@ def create_messages_table(conn):
     ''')
     conn.commit()
 
+
 @app.before_request
 def initialize_database():
     conn = get_db_connection()
@@ -56,6 +66,7 @@ def initialize_database():
     create_friend_tables(conn)
     create_leaderboard_table(conn)
     create_badges_table(conn)
+<<<<<<< HEAD
     create_messages_table(conn)
     conn.close()
 def debug_check_tables():
@@ -71,43 +82,54 @@ debug_check_tables()
 
 
 #ADDED BELOW
+=======
+    create_messages_table(conn)  # ADD THIS LINE
+    conn.close()
+
+
+# ADDED BELOW
+>>>>>>> bac29378a600a5745e76c13fc993de88050c6c21
 @app.route('/get_global_messages')
 def get_global_messages():
     if 'username' not in session:
         return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT username, message, timestamp FROM messages ORDER BY timestamp DESC LIMIT 50")
     messages = [{'username': row[0], 'message': row[1], 'timestamp': row[2]} for row in cursor.fetchall()]
     conn.close()
-    
+
     return jsonify({'status': 'success', 'messages': messages})
-#ADDED BELOW
+
+
+# ADDED BELOW
 @app.route('/send_global_message', methods=['POST'])
 def send_global_message():
     if 'username' not in session:
         return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
-    
+
     data = request.form
     message = data.get('message')
-    
+
     if not message:
         return jsonify({'status': 'error', 'message': 'Message cannot be empty.'}), 400
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO messages (username, message) VALUES (?, ?)", (session['username'], message))
     conn.commit()
     conn.close()
-    
+
     return jsonify({'status': 'success', 'message': 'Message sent successfully.'})
+
 
 @app.route('/')
 def start_page():
     if 'username' in session:
         return redirect(url_for('index'))
     return render_template('start-page.html')
+
 
 @app.route('/loginSpotify')
 def loginSpotify():
@@ -116,15 +138,17 @@ def loginSpotify():
         return redirect(url_for('login'))
     return redirect(sp_oauth.get_authorize_url())
 
+
 @app.route('/callback')
 def callback():
     if 'username' not in session:
         flash("Please log in to your account first.")
         return redirect(url_for('login'))
-    
+
     token_info = sp_oauth.get_access_token(request.args['code'])
     session['token_info'] = token_info
     return redirect(url_for('index'))
+
 
 @app.route('/index')
 def index():
@@ -173,6 +197,7 @@ def index():
                            question=question,
                            options=options)
 
+
 @app.route('/get_leaderboard')
 def get_leaderboard_route():
     conn = get_db_connection()
@@ -180,14 +205,15 @@ def get_leaderboard_route():
     conn.close()
     return jsonify(leaderboard)
 
+
 @app.route('/get_trivia_question')
 def get_trivia_question():
     if 'token_info' not in session:
         return jsonify({'status': 'error', 'message': 'Spotify authentication required'}), 400
-    
+
     token_info = session.get('token_info')
     sp = Spotify(auth=token_info['access_token'])
-    
+
     try:
         top_artists = sp.current_user_top_artists(limit=5, time_range='short_term')['items']
         artist_names = [artist['name'] for artist in top_artists]
@@ -201,6 +227,7 @@ def get_trivia_question():
         print(f"Error generating trivia question: {e}")
         return jsonify({'status': 'error', 'message': 'Error generating trivia question'}), 500
 
+
 @app.route('/answer_trivia', methods=['POST'])
 def answer_trivia():
     if 'username' not in session or 'current_question' not in session:
@@ -208,7 +235,7 @@ def answer_trivia():
 
     data = request.get_json()
     user_answer = data.get('answer')
-    
+
     current_question = session['current_question']
 
     if user_answer == current_question['correct_answer']:
@@ -216,17 +243,21 @@ def answer_trivia():
         update_score(conn, session['username'], 1)
         check_and_award_badges(conn, session['username'])
         conn.close()
-        result = {'status': 'correct', 'message': 'Correct answer!', 'correct_answer': current_question['correct_answer']}
+        result = {'status': 'correct', 'message': 'Correct answer!',
+                  'correct_answer': current_question['correct_answer']}
     else:
-        result = {'status': 'incorrect', 'message': f"Wrong answer. The correct answer was {current_question['correct_answer']}.", 'correct_answer': current_question['correct_answer']}
+        result = {'status': 'incorrect',
+                  'message': f"Wrong answer. The correct answer was {current_question['correct_answer']}.",
+                  'correct_answer': current_question['correct_answer']}
 
     return jsonify(result)
+
 
 @app.route('/get_global_leaderboard')
 def get_global_leaderboard():
     conn = get_db_connection()
     leaderboard = get_leaderboard(conn)
-    
+
     # Add current user if not in the top 10
     if 'username' in session:
         current_user = session['username']
@@ -237,9 +268,10 @@ def get_global_leaderboard():
             if user_score:
                 leaderboard.append({"username": user_score[0], "score": user_score[1]})
                 leaderboard.sort(key=lambda x: x['score'], reverse=True)
-    
+
     conn.close()
     return jsonify(leaderboard[:10])
+
 
 @app.route('/get_friends_leaderboard')
 def get_friends_leaderboard():
@@ -258,10 +290,9 @@ def get_friends_leaderboard():
         if user_score:
             leaderboard.append({"username": user_score[0], "score": user_score[1]})
             leaderboard.sort(key=lambda x: x['score'], reverse=True)
-    
+
     conn.close()
     return jsonify(leaderboard[:10])
-
 
 
 @app.route('/get_playlists')
@@ -269,17 +300,19 @@ def get_playlists():
     if not sp_oauth.validate_token(cache_handler.get_cached_token()):
         auth_url = sp_oauth.get_authorize_url()
         return redirect(auth_url)
-    
+
     sp = Spotify(auth_manager=sp_oauth)
     playlists = sp.current_user_playlists()
     playlists_info = [(pl['name'], pl['external_urls']['spotify']) for pl in playlists['items']]
     playlists_html = '<br>'.join([f'<a href="{url}">{name}</a>' for name, url in playlists_info])
     return f'<h1>Your Playlists</h1>{playlists_html}<br><a href="/logout">Logout</a>'
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('start_page'))
+
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -287,7 +320,7 @@ def signup():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-        
+
         conn = get_db_connection()
         cursor = conn.cursor()
 
@@ -296,80 +329,84 @@ def signup():
         if cursor.fetchone():
             flash("Username already taken.")
             return render_template('signup.html')
-        
+
         # Check if email is valid and not already registered
         if not is_valid_email(email):
             flash("Invalid email address.")
             return render_template('signup.html')
-        
+
         cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
         if cursor.fetchone():
             flash("Email already registered.")
             return render_template('signup.html')
-        
+
         # Check if password is valid
         if not is_valid_password(password):
             flash("Invalid password. It must be at least 8 characters long and contain at least one special character.")
             return render_template('signup.html')
-        
+
         # Hash the password and insert the new user
         hashed_password = hash_password(password)
-        cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", (username, email, hashed_password))
+        cursor.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+                       (username, email, hashed_password))
         conn.commit()
         conn.close()
-        
+
         flash("Registration successful. Please log in.")
         return redirect(url_for('login'))
-    
+
     return render_template('signup.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         identifier = request.form['identifier']
         password = request.form['password']
-        
+
         conn = get_db_connection()
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        
+
         cursor.execute("SELECT * FROM users WHERE username = ? OR email = ?", (identifier, identifier))
         user = cursor.fetchone()
-        
+
         if user and user['password'] == hash_password(password):
             session['username'] = user['username']
             flash("Logged in successfully.")
             return redirect(url_for('index'))
         else:
             flash("Invalid username/email or password.")
-        
+
         conn.close()
-    
+
     return render_template('login.html')
+
 
 @app.route('/profile')
 def profile():
     if 'username' not in session:
         flash("Please log in to access this page.")
         return redirect(url_for('login'))
-    
+
     username = session['username']
     conn = get_db_connection()
     friends = view_friends(conn, username)
     check_and_award_badges(conn, username)
     badges = get_user_badges(conn, username)
     conn.close()
-    
+
     return render_template('profile.html', username=username, friends=friends, badges=badges)
+
 
 @app.route('/send_friend_request', methods=['POST'])
 def send_friend_request_route():
     if 'username' not in session:
         return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
-    
+
     data = request.get_json()
     receiver_username = data.get('receiver_username')
-    
+
     conn = get_db_connection()
     result = send_friend_request(conn, session['username'], receiver_username)
     conn.close()
@@ -382,44 +419,48 @@ def send_friend_request_route():
     else:
         return jsonify({'status': 'error', 'message': 'User not found.'}), 404
 
+
 @app.route('/view_friend_requests')
 def view_friend_requests_route():
     if 'username' not in session:
         return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
-    
+
     conn = get_db_connection()
     requests = view_friend_requests(conn, session['username'])
     conn.close()
-    
+
     if not requests:
         return jsonify({'status': 'success', 'message': 'No friend requests :(', 'requests': []})
     else:
         return jsonify({'status': 'success', 'requests': requests})
 
+
 @app.route('/accept_friend_request', methods=['POST'])
 def accept_friend_request_route():
     if 'username' not in session:
         return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
-    
+
     data = request.get_json()
     request_id = data.get('request_id')
-    
+
     conn = get_db_connection()
     accept_friend_request(conn, session['username'], request_id)
     conn.close()
-    
+
     return jsonify({'status': 'success', 'message': 'Friend request accepted'})
+
 
 @app.route('/view_friends')
 def view_friends_route():
     if 'username' not in session:
         return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
-    
+
     conn = get_db_connection()
     friends = view_friends(conn, session['username'])
     conn.close()
-    
+
     return jsonify({'status': 'success', 'friends': friends})
+
 
 @app.route('/discover', methods=['GET', 'POST'])
 def discover():
@@ -428,21 +469,21 @@ def discover():
         user_location = request.form.get('location')
         favorite_genre = request.form.get('genre')
         radius = int(request.form.get('radius'))
-        
+
         try:
             sp = Spotify(auth=token_info['access_token'])
-            
+
             top_artists = sp.current_user_top_artists(limit=5, time_range='short_term')
             genres = set()
             for artist in top_artists['items']:
                 genres.update(artist['genres'])
-            top_genres = list(genres)[:3]  
+            top_genres = list(genres)[:3]
             top_genres.append(favorite_genre)
 
             chatgpt_recommendation, all_events = get_concert_recommendations(user_location, top_genres, radius)
             music_recommendations = get_music_recommendations(sp)
-            
-            return render_template('discover.html', 
+
+            return render_template('discover.html',
                                    chatgpt_recommendation=chatgpt_recommendation,
                                    all_events=all_events,
                                    music_recommendations=music_recommendations)
@@ -452,6 +493,7 @@ def discover():
             return redirect(url_for('loginSpotify'))
     else:
         return render_template('discover.html')
+
 
 @app.route('/collab')
 def collab():
@@ -488,17 +530,19 @@ def get_friend_messages():
 
     return jsonify(messages)
 
+
 @app.route('/send_friend_message', methods=['POST'])
 def send_friend_message():
     if 'username' not in session:
         return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
-    
+
     data = request.form
     recipient_username = data.get('recipient_username')
     message = data.get('message')
 
     conn = get_db_connection()
-    result = send_friend_message(conn, session['username'], recipient_username, message)  # Implement this function to send message
+    result = send_friend_message(conn, session['username'], recipient_username,
+                                 message)  # Implement this function to send message
     conn.close()
 
     if result:
@@ -506,6 +550,7 @@ def send_friend_message():
     else:
         return jsonify({'success': False, 'message': 'Failed to send message.'}), 500
 
+<<<<<<< HEAD
 @app.route('/movies')
 def movies():
     if 'username' not in session:
@@ -581,6 +626,8 @@ def movie_trivia():
     else:
         return jsonify({"status": "error", "message": "No movies in wishlist or reviews"})
 
+=======
+>>>>>>> bac29378a600a5745e76c13fc993de88050c6c21
 
 # Function to get Spotify token from session
 def get_spotify_token():
@@ -589,14 +636,16 @@ def get_spotify_token():
         return None
     return token_info['access_token']
 
+
 def get_user_top_playlists(limit=5):
     token = get_spotify_token()
     if not token:
         return None
-    
+
     sp = Spotify(auth=token)
     playlists = sp.current_user_playlists(limit=limit)
     return playlists['items']
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
