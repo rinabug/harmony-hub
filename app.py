@@ -183,11 +183,6 @@ def game():
 def find_friend():
     return render_template('find_friend.html')
 
-@app.route('/logout')
-def logout():
-    return redirect(url_for('start_page'))
-
-
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
 
