@@ -52,7 +52,18 @@
                     <div class="bento-item medium">
                         <h2>Featured Playlists</h2>
                         <div id="featuredPlaylistsContent">
-                            <!-- Featured playlists content will be loaded dynamically -->
+                            {% if playlists_info %}
+                                <ul>
+                                    {% for name, image_url, url in playlists_info %}
+                                        <li class="playlist-item">
+                                            <img src="{{ image_url }}" alt="Playlist Image">
+                                            <a href="{{ url }}" target="_blank">{{ name }}</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>No playlists available. Connect to Spotify to see your playlists.</p>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="bento-item medium">
