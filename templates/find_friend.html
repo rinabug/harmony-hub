@@ -100,28 +100,6 @@
                 header.classList.toggle('expanded');
             });
         });
-
-        /*searching for friends js*/
-        const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', function() {
-                const query = searchInput.value;
-                if (query.length > 0) {
-                    fetch(`/search_friends?q=${query}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            const searchResults = document.getElementById('searchResults');
-                            searchResults.innerHTML = '';
-                            data.forEach(user => {
-                                const userItem = document.createElement('div');
-                                userItem.classList.add('user-item');
-                                userItem.textContent = user.username;
-                                searchResults.appendChild(userItem);
-                            });
-                        });
-                } else {
-                    document.getElementById('searchResults').innerHTML = '';
-                }
-            });
     </script>
 </body>
 </html>

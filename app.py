@@ -183,6 +183,20 @@ def game():
 def find_friend():
     return render_template('find_friend.html')
 
+#example data
+users = [
+    {'username': 'john_doe'},
+    {'username': 'jane_smith'},
+    {'username': 'alice_jones'},
+    {'username': 'bob_brown'}
+]
+
+@app.route('/search_friends', methods=['GET'])
+def search_friends():
+    query = request.args.get('q')
+    results = [user for user in users if query.lower() in user['username'].lower()]
+    return jsonify(results)
+
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
 
