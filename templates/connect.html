@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Music Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="connect-container">
+        <div class="form-bubble">
+            <h2>Connect Your Music Platform</h2>
+            <form id="connect-form" action="{{ url_for('connect') }}" method="POST">
+                <button type="submit" name="platform" value="spotify" class="c-button">Connect Spotify</button>
+                <button type="submit" name="platform" value="apple_music" class="c-button">Connect Apple Music</button>
+                <button type="submit" name="platform" value="soundcloud" class="c-button">Connect SoundCloud</button>
+                <button type="submit" name="platform" value="other" class="c-button">Connect Other Music Platform</button>
+            </form>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/connect.js') }}"></script>
+</body>
+</html>
