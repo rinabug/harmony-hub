@@ -57,7 +57,10 @@
                                     {% for name, image_url, url in playlists_info %}
                                         <li class="playlist-item">
                                             <img src="{{ image_url }}" alt="Playlist Image">
-                                            <a href="{{ url }}" target="_blank">{{ name }}</a>
+                                            <a href="{{ url }}" target="_blank" title="Open this playlist on Spotify">
+                                                {{ name }}
+                                                <i class="fas fa-external-link-alt external-link-icon"></i>
+                                            </a>
                                         </li>
                                     {% endfor %}
                                 </ul>
@@ -69,7 +72,21 @@
                     <div class="bento-item medium">
                         <h2>Top Charts</h2>
                         <div id="topChartsContent">
-                            <!-- Top charts content will be loaded dynamically -->
+                            {% if top_charts_info %}
+                                <ul>
+                                    {% for name, image_url, url in top_charts_info %}
+                                        <li class="top-chart-item">
+                                            <img src="{{ image_url }}" alt="Top Chart Image">
+                                            <a href="{{ url }}" target="_blank" title="Open this top chart on Spotify">
+                                                {{ name }}
+                                                <i class="fas fa-external-link-alt external-link-icon"></i>
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>No top charts available. Connect to Spotify to see the top charts.</p>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="bento-item large">

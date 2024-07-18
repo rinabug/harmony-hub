@@ -80,12 +80,17 @@ def index():
         sp = Spotify(auth=token_info)
         playlists = sp.current_user_playlists(limit=5)
         playlists_info = [(pl['name'], pl['images'][0]['url'], pl['external_urls']['spotify']) for pl in playlists['items']]
+
+        # Fetch featured playlists for top charts section
+        top_charts = sp.featured_playlists(limit=5)
+        top_charts_info = [(pl['name'], pl['images'][0]['url'], pl['external_urls']['spotify']) for pl in top_charts['playlists']['items']]
+
     except Exception as e:
         print(f"Error fetching Spotify playlists: {e}")
         flash("There was an error connecting to Spotify. Please try logging in again.")
         return redirect(url_for('loginSpotify'))
 
-    return render_template('index.html', username=username, playlists_info=playlists_info)
+    return render_template('index.html', username=username, playlists_info=playlists_info, top_charts_info=top_charts_info)
 
 @app.route('/logout')
 def logout():
