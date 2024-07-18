@@ -24,9 +24,10 @@
                 <ul>
                     <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a></li>
                     <li><a href="{{ url_for('discover') }}"><i class="fas fa-search"></i> Discover</a></li>
-                    <li><a href="{{ url_for('collab') }}"><i class="fas fa-users"></i> Collab</a></li>
+                    <li><a href="{{ url_for('collab') }}"><i class="fas fa-globe"></i> Collab</a></li>
+                    <li><a href="{{ url_for('find_friend') }}"><i class="fas fa-users"></i> Friends</a></li>
                     <li><a href="{{ url_for('game') }}"><i class="fas fa-gamepad"></i> Games</a></li>
-                    <li><a href=""><i class="fas fa-user"></i> Profile</a></li>
+                    <li><a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profile</a></li>
                 </ul>
             </nav>
             <a href="{{ url_for('logout') }}" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -49,17 +50,6 @@
                             <p>Email: {{ email }}</p>
                             <p>Bio: {{ bio }}</p>
                         </div>
-                    </div>
-                    <div class="bento-item small">
-                        <h2>Friend Requests</h2>
-                        <ul id="friend-requests-list"></ul>
-                    </div>
-                    <div class="bento-item small">
-                    <div class="container">
-                        <h2>Send Friend Request</h2>
-                        <input type="text" id="friend-username" class="input-large" placeholder="Enter username">
-                        <button id="send-request-btn" class="button">Send Request</button>
-                    </div>
                     </div>
                     <div class="bento-item medium">
                         <h2>Favorite Music</h2>

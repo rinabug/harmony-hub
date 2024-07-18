@@ -583,7 +583,7 @@ section {
 
 /*Friends input section*/
 .input-large {
-    width: 100%;
+    width: 90%;
     padding: 10px;
     font-size: 16px;
     border: 1px solid #ccc;
@@ -591,6 +591,29 @@ section {
     box-sizing: border-box; /* Ensures padding and border are included in the element's total width and height */
     margin-bottom: 10px; /* Add some space below the input */
 }
+
+.search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
+#searchResults {
+    margin-top: 10px;
+}
+
+.user-item {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.user-item:hover {
+    background-color: #f0f0f0;
+}
+
 
 /* Responsive Design */
 @media (max-width: 768px) {

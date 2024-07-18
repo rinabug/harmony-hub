@@ -1,4 +1,4 @@
-from flask import Flask, render_template, url_for, redirect, session, flash, jsonify
+from flask import Flask, render_template, url_for, redirect, session, flash, jsonify, request
 
 app = Flask(__name__)
 
@@ -32,7 +32,11 @@ def collab():
 
 @app.route('/game')
 def game():
-    return render_template('game.html')   
+    return render_template('game.html')
+
+@app.route('/find_friend')
+def find_friend():
+    return render_template('find_friend.html')
 
 @app.route('/logout')
 def logout():
