@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Music Buddy</title>
+    <title>Profile</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -11,7 +11,7 @@
 <body>
     <header>
         <button class="menu-toggle" id="menu-toggle">&#9776;</button>
-        <h1>Music Buddy</h1>
+        <h1>Harmony Hub</h1>
     </header>
 
     <div id="main-container">
@@ -39,7 +39,63 @@
                     <p>View, customize, and edit profile!</p>
                 </div>
             </section>
-            
+            <section class="bento-box-section">
+                <div class="bento-box-container">
+                    <div class="bento-item large">
+                        <h2>Info</h2>
+                        <div class="profile-info">
+                            <img src="{{ profile_picture_url }}" alt="Profile Picture" class="profile-picture">
+                            <p>Name: {{ username }}</p>
+                            <p>Email: {{ email }}</p>
+                            <p>Bio: {{ bio }}</p>
+                        </div>
+                    </div>
+                    <div class="bento-item medium">
+                        <h2>Favorite Music</h2>
+                        <div id="favoriteMusicContent">
+                            <!-- Favorite songs/artists/genres content will be loaded dynamically -->
+                            <ul>
+                                {% for item in favorite_music %}
+                                    <li>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bento-item medium">
+                        <h2>Favorite Movies/Shows</h2>
+                        <div id="favoriteMoviesContent">
+                            <!-- Favorite movies/shows content will be loaded dynamically -->
+                            <ul>
+                                {% for item in favorite_movies %}
+                                    <li>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bento-item small">
+                        <h2>Badges & Achievements</h2>
+                        <div id="badgesContent">
+                            <!-- Badges and achievements content will be loaded dynamically -->
+                            <ul>
+                                {% for badge in badges %}
+                                    <li>{{ badge }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="bento-item large">
+                        <h2>Recent Activity</h2>
+                        <div id="recentActivityContent">
+                            <!-- Recent activity content will be loaded dynamically -->
+                            <ul>
+                                {% for activity in recent_activity %}
+                                    <li>{{ activity }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>            
             
         </main>
     </div>
