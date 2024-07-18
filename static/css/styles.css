@@ -7,21 +7,28 @@
 
 body {
     font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    padding: 0;
     color: #333;
-    overflow-x: hidden;
+    overflow: hidden;
     height: 100vh;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background: linear-gradient(120deg, #5680E9, #84CEEB, #5AB9EA, #C1C8E4, #8860D0);
+    background-size: 150% 150%;
+    animation: gradientAnimation 15s ease infinite;
 }
 
 #main-container {
     display: flex;
     flex: 1;
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.3s ease, padding-left 0.3s ease;
 }
 
 #main-container.collapsed {
-    grid-template-columns: 0 1fr;
+    margin-left: 250px;
 }
 
 /* Sidebar */
@@ -31,14 +38,14 @@ body {
     top: 0;
     width: 250px;
     height: 100%;
-    background-color: #8B63DA;
+    background-color: rgba(86, 128, 233, 0.9); /* Updated color */
     color: #ffffff;
     transition: transform 0.3s ease;
-    transform: translateX(-250px); /* Adjust the translateX to match the sidebar width */
+    transform: translateX(-250px);
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Ensure space between items */
-    align-items: center; /* Center content horizontally */
+    justify-content: space-between;
+    align-items: center;
     padding: 20px 0;
 }
 
@@ -55,7 +62,7 @@ body {
 }
 
 .sidebar nav {
-    flex: 1; /* Allow the nav to grow and take up available space */
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -86,13 +93,12 @@ body {
 }
 
 .sidebar nav ul li a:hover {
-    background-color: #7a52c3;
-    color: #ffffff;
+    background-color: #84CEEB; /* Updated color */
 }
 
 /* Logout Button */
 .logout {
-    background-color: #8B63DA;
+    background-color: rgba(86, 128, 233, 0.9); /* Updated color */
     color: #ffffff;
     text-decoration: none;
     font-size: 18px;
@@ -106,7 +112,7 @@ body {
 }
 
 .logout:hover {
-    background-color: #7a52c3;
+    background-color: white; 
 }
 
 /* Main Content */
@@ -125,7 +131,7 @@ body {
 
 /* Header */
 header {
-    background-color: #CB98ED;
+    background-color: rgba(90, 185, 234, 0.9); /* Updated color */
     color: #000000;
     padding: 10px;
     text-align: center;
@@ -133,6 +139,11 @@ header {
     position: fixed;
     top: 0;
     z-index: 1000;
+    transition: margin-left 0.3s ease; /* Add transition for smooth movement */
+}
+
+header.expanded {
+    margin-left: 500px; /* Adjust this value to match the sidebar width */
 }
 
 .menu-toggle {
@@ -152,12 +163,6 @@ header h1 {
     font-size: 24px;
 }
 
-/* Other Styles */
-.container {
-    width: 80%;
-    margin: 0 auto;
-}
-
 /* Canvas Background */
 #backgroundCanvas {
     position: absolute;
@@ -168,6 +173,7 @@ header h1 {
     z-index: -1;
 }
 
+/* Links */
 a {
     text-decoration: none;
     color: inherit;
@@ -175,15 +181,37 @@ a {
 }
 
 a:hover {
-    color: #8B63DA;
+    color: #5680E9; /* Updated color */
 }
 
 /* Start Page Styles */
-.site-logo {
-    display: block;
-    margin: 0 auto;
-    max-width: 400px;
-    height: auto;
+@keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.waves {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    min-height: 100px;
+    max-height: 150px;
+}
+
+.parallax > use {
+    animation: moveWaves 10s cubic-bezier(.55,.5,.45,.5) infinite;
+}
+
+@keyframes moveWaves {
+    0% {
+        transform: translate3d(-90px,0,0);
+    }
+    100% {
+        transform: translate3d(85px,0,0);
+    }
 }
 
 .start-page-container {
@@ -191,10 +219,21 @@ a:hover {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
-    background-color: rgba(245, 245, 245, 0.9); /* Slightly transparent background */
     z-index: 1;
-    position: relative;
+    padding: 20px;
+    background: none; /* Remove the white background */
+}
+
+.site-logo {
+    display: block;
+    max-width: 200px;
+    margin-bottom: 20px;
+}
+
+.start-page-container h1 {
+    margin-bottom: 20px;
+    color: #fff;
+    font-size: 2.5em;
 }
 
 .button-container {
@@ -210,18 +249,12 @@ a:hover {
     margin-top: 16px;
 }
 
-.button-primary {
-    margin-top: 30px;
-}
-
-/* Button Styles */
 .button {
-    display: inline-block;
     padding: 10px 20px;
     font-size: 16px;
     font-weight: 700;
     color: #fff;
-    background-color: #8B63DA;
+    background-color: #5680E9;
     border: none;
     border-radius: 4px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -229,43 +262,33 @@ a:hover {
 }
 
 .button:hover {
-    background-color: #7a52c3;
+    background-color: #84CEEB;
     transform: translateY(-2px);
 }
 
 .button:active {
-    background-color: #684bb0;
+    background-color: #84CEEB;
     transform: translateY(0);
 }
 
-.button-secondary {
-    background-color: #1DB954; /* Spotify green */
-}
-
-.button-secondary:hover {
-    background-color: #1aa34a;
-}
-
-.button-secondary:active {
-    background-color: #178f3f;
-}
-
 /* Login & Signup Pages */
-.login-container {
+.login-container,
+.register-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
-    background-color: #f5f5f5;
+    background: none; /* Remove the white background */
 }
 
-.login-container h2 {
+.login-container h2,
+.register-container h2 {
     margin-bottom: 20px;
 }
 
 .form-bubble {
-    background-color: white;
+    background: white; 
     padding: 40px;
     width: 400px;
     border-radius: 15px;
@@ -275,13 +298,15 @@ a:hover {
     align-items: center;
 }
 
-.login-container form {
+.login-container form,
+.register-container form {
     display: flex;
     flex-direction: column;
     width: 100%;
 }
 
-.login-container input {
+.login-container input,
+.register-container input {
     margin-bottom: 16px;
     padding: 10px;
     border: 1px solid #ccc;
@@ -289,9 +314,10 @@ a:hover {
     width: 100%;
 }
 
-.login-container button {
+.login-container button,
+.register-container button {
     padding: 10px;
-    background-color: #8B63DA;
+    background-color: #5680E9; /* Updated color */
     color: white;
     border: none;
     border-radius: 4px;
@@ -299,12 +325,14 @@ a:hover {
     margin-bottom: 16px;
 }
 
-.login-container button:hover {
-    background-color: #CB98ED;
+.login-container button:hover,
+.register-container button:hover {
+    background-color: #5AB9EA; /* Updated color */
 }
 
+/* Home Link Button */
 .B-home {
-    color: #8B63DA;
+    color: #5680E9; /* Updated color */
     border: none;
     cursor: pointer;
     margin-bottom: 16px;
@@ -313,48 +341,7 @@ a:hover {
 }
 
 .B-home:hover {
-    color: black;
-}
-
-/* Signup Page */
-.register-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    background-color: #f5f5f5;
-}
-
-.register-container h2 {
-    margin-bottom: 20px;
-}
-
-.register-container form {
-    display: flex;
-    flex-direction: column;
-    width: 300px;
-}
-
-.register-container input {
-    margin-bottom: 16px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-.register-container button {
-    padding: 10px;
-    background-color: #8B63DA;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 16px;
-}
-
-.register-container button:hover {
-    background-color: #CB98ED;
+    color: #333;
 }
 
 /* Welcome Section */
@@ -362,7 +349,7 @@ a:hover {
     color: #333;
     padding: 50px 0;
     text-align: center;
-    background: linear-gradient(to right, #8B63DA, #CB98ED);
+    background: linear-gradient(to right, #5680E9, #5AB9EA); /* Updated gradient */
     color: white;
     border-radius: 8px;
     margin-bottom: 30px;
@@ -381,16 +368,40 @@ a:hover {
 /* Section Styles */
 section {
     margin-bottom: 40px;
-}
-
-.activity-section, .featured-playlists-section, .top-charts-section, .recommendations-section, .messaging-section, .friend-suggestions-section {
-    background: white;
+    background: rgba(255, 255, 255, 0.8);
     color: #333;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Activity Section Styles */
+.activity-section .activity-item,
+.featured-playlists-section .playlist-item,
+.top-charts-section .chart-item,
+.recommendations-section .recommendation-item,
+.messaging-section .message-item,
+.friend-suggestions-section .suggestion-item {
+    background: white; /* Slightly transparent white */
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 10px;
+    padding: 20px;
+    width: 30%;
+    text-align: left;
+}
+
+.activity-section img,
+.featured-playlists-section img,
+.top-charts-section img,
+.recommendations-section img,
+.messaging-section img,
+.friend-suggestions-section img {
+    width: 100%;
+    border-radius: 10px;
+}
+
+/* Section Headers */
 .container {
     width: 90%;
     margin: 0 auto;
@@ -407,109 +418,183 @@ section {
     line-height: 1.5;
 }
 
-.activity-content, .playlist-content, .chart-content, .recommendations-content, .messaging-content, .suggestions-content {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-}
-
-.activity-item, .playlist-item, .chart-item, .recommendation-item, .message-item, .suggestion-item {
-    background: #f9f9f9;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 10px;
-    padding: 20px;
-    width: 30%;
-    text-align: left;
-}
-
-.activity-item img, .playlist-item img, .chart-item img, .recommendation-item img, .message-item img, .suggestion-item img {
-    width: 100%;
-    border-radius: 10px;
-}
-
-.activity-info, .playlist-info, .chart-info, .recommendation-info, .message-info, .suggestion-info {
-    margin-top: 10px;
-}
-
-/* Sections */
-.Discover-section, .collab-section, .profile-section, .games-section {
+/* Discover, Collab, Profile, and Games Sections */
+.discover-section,
+.collab-section,
+.profile-section,
+.games-section {
     color: #333;
     padding: 50px 0;
     text-align: center;
-    background: linear-gradient(to right, #8B63DA, #CB98ED);
+    background: linear-gradient(to right, #5680E9, #5AB9EA); /* Updated gradient */
     color: white;
     border-radius: 8px;
     margin-bottom: 30px;
 }
 
-.Discover-section, .collab-section, .profile-section, .games-section h1 {
+.discover-section h1,
+.collab-section h1,
+.profile-section h1,
+.games-section h1 {
     font-size: 3em;
     margin-bottom: 20px;
 }
 
-.Discover-section, .collab-section, .profile-section, .games-section p {
+.discover-section p,
+.collab-section p,
+.profile-section p,
+.games-section p {
     font-size: 1.2em;
     line-height: 1.5;
 }
 
-
-/* Parent container for sections */
-.main-container {
+/* Input and Trivia Section Styles */
+.input-section,
+.trivia-section {
     display: flex;
-    justify-content: space-between;
-    gap: 20px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: 30px;
 }
 
-/* Individual sections */
-.main-container > section {
-    flex: 1;
+.input-section form,
+.trivia-section form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 400px;
+}
+
+.input-section label,
+.trivia-section label {
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.input-section input,
+.trivia-section input {
+    margin-bottom: 16px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.input-section button,
+.trivia-section button {
+    padding: 10px;
+    background-color: #5680E9; /* Updated color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 16px;
+}
+
+.input-section button:hover,
+.trivia-section button:hover {
+    background-color: #5AB9EA; /* Updated color */
+}
+
+/* Sections with Scrollable Content */
+.concert-section,
+.music-section,
+.movie-section,
+.leaderboard-section,
+.chat-section,
+.friends-section,
+.badges-section {
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.leaderboard-section,
+.trivia-section,
+.six-degrees,
+.concert-section,
+.music-section,
+.playlist-section,
+.chat-section,
+.friends-section,
+.badges-section {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     padding: 30px;
     border-radius: 12px;
-    background-color: #ffffff;
+    background: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    width: calc(50% - 60px);
     height: 600px;
+    overflow-y: auto;
 }
 
-/* Adjustments for smaller screens */
+.row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+/* Bento Box Styles */
+.bento-box-section {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.bento-box-container {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 20px;
+}
+
+.bento-item {
+    background: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+    border-radius: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+}
+
+.bento-item.large {
+    grid-column: span 8;
+}
+
+.bento-item.medium {
+    grid-column: span 4;
+}
+
+.bento-item.small {
+    grid-column: span 3;
+}
+
+.bento-item h2 {
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
     .main-container > section {
         flex: 1 1 100%;
     }
-}
-
-/* Buttons */
-.button {
-    padding: 16px 40px;
-    font-size: 18px;
-    background-color: #8B63DA;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background-color 0.3s, box-shadow 0.3s;
-}
-
-.button:hover {
-    background-color: #CB98ED;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .container {
-        width: 100%;
-        padding: 0 10px;
-    }
     
-    .leaderboard-section, .trivia-section, .Concert-section, .Music-section, .playlist-section, .chat-section, .friends-section, .badges-section {
+    .leaderboard-section,
+    .trivia-section,
+    .concert-section,
+    .music-section,
+    .playlist-section,
+    .chat-section,
+    .friends-section,
+    .badges-section {
         width: 100%;
     }
 
@@ -537,3 +622,4 @@ section {
         margin-left: 200px;
     }
 }
+

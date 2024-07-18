@@ -17,7 +17,7 @@
     <div id="main-container">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <i class="fas fa-music"></i>
+                <i class="fas fa-cloud"></i>
                 <span>Harmony Hub</span>
             </div>
             <nav>
@@ -39,7 +39,7 @@
                     <p>View, customize, and edit profile!</p>
                 </div>
             </section>
-
+            
             
         </main>
     </div>
@@ -50,10 +50,14 @@
             const menuToggle = document.getElementById('menu-toggle');
             const sidebar = document.getElementById('sidebar');
             const mainContainer = document.getElementById('main-container');
+            const mainContent = document.getElementById('main-content');
+            const header = document.querySelector('header');
 
             menuToggle.addEventListener('click', function() {
                 sidebar.classList.toggle('open');
                 mainContainer.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+                header.classList.toggle('expanded');
             });
         });
     </script>

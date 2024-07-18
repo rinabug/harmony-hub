@@ -14,7 +14,7 @@ function loadUserProfile() {
         .catch(error => console.error('Error loading profile:', error));
 }
 
-/*sidebar functionality*/
+/*sidebar functionality
 document.addEventListener('DOMContentLoaded', function() {
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.getElementById('sidebar');
@@ -25,3 +25,4 @@ document.addEventListener('DOMContentLoaded', function() {
         mainContent.classList.toggle('collapsed');
     });
 });
+*/

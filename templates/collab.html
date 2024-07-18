@@ -17,8 +17,8 @@
     <div id="main-container">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <i class="fas fa-music"></i>
-                <span>Music Buddy</span>
+                <i class="fas fa-cloud"></i>
+                <span>Harmony Hub</span>
             </div>
             <nav>
                 <ul>
@@ -36,10 +36,39 @@
             <section class="collab-section">
                 <div class="container">
                     <h1>Collab</h1>
-                    <p>Create and Chat with friends</p>
+                    <p>Create and connect with friends</p>
                 </div>
             </section>
 
+            <!-- Bento-box sections -->
+            <section class="bento-box-section">
+                <div class="bento-box-container">
+                    <div class="bento-item small">
+                        <h2>Friend Activity</h2>
+                        <div id="friendActivityContent">
+                            <!-- Friend activity content will be loaded dynamically -->
+                        </div>
+                    </div>
+                    <div class="bento-item medium">
+                        <h2>Playlists Collab</h2>
+                        <div id="featuredPlaylistsContent">
+                            <!-- Featured playlists content will be loaded dynamically -->
+                        </div>
+                    </div>
+                    <div class="bento-item medium">
+                        <h2>Movie Watch-Party</h2>
+                        <div id="topChartsContent">
+                            <!-- Will be loaded dynamically -->
+                        </div>
+                    </div>
+                    <div class="bento-item large">
+                        <h2>Show Watch-Party</h2>
+                        <div id="recommendationsContent">
+                            <!-- Will be loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -49,10 +78,14 @@
             const menuToggle = document.getElementById('menu-toggle');
             const sidebar = document.getElementById('sidebar');
             const mainContainer = document.getElementById('main-container');
+            const mainContent = document.getElementById('main-content');
+            const header = document.querySelector('header');
 
             menuToggle.addEventListener('click', function() {
                 sidebar.classList.toggle('open');
                 mainContainer.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+                header.classList.toggle('expanded');
             });
         });
     </script>
