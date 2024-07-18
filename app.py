@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, flash
@@ -9,8 +10,10 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
 DATABASE = 'users.db'
 
-client_id = '6754e8f664b34afea88fa0a353647e33'
-client_secret = 'c12ca62b11b24896872bbeab7cd4d814'
+load_dotenv()
+
+client_id = os.getenv('SPOTIFY_CLIENT_ID')
+client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
 redirect_uri = 'http://localhost:8080/callback'
 scope = 'playlist-read-private,user-follow-read,user-top-read,user-read-recently-played'
 
