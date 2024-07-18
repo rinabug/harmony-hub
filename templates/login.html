@@ -11,20 +11,20 @@
     <div class="login-container">
         <div class="form-bubble">
             <h2>Login</h2>
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    <ul class="flash-messages">
-                        {% for message in messages %}
-                            <li>{{ message }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            {% endwith %}
             <form id="login-form" action="{{ url_for('login') }}" method="POST">
                 <input type="text" id="identifier" name="identifier" placeholder="Username or Email" required>
                 <input type="password" id="password" name="password" placeholder="Password" required>
                 <button type="submit">Login</button>
             </form>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
             <a href="{{ url_for('start_page') }}" class="B-home">Back to Home</a>
         </div>
         <!-- <a href="" class="">Forgot Password?</a> -->

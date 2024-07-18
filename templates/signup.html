@@ -11,21 +11,21 @@
     <div class="register-container">
         <div class="form-bubble">
             <h2>Sign-Up</h2>
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    <ul class="flash-messages">
-                        {% for message in messages %}
-                            <li>{{ message }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            {% endwith %}
             <form id="register-form" action="{{ url_for('signup') }}" method="POST">
                 <input type="text" id="username" name="username" placeholder="Username" required>
                 <input type="email" id="email" name="email" placeholder="Email" required>
                 <input type="password" id="password" name="password" placeholder="Password" required>
                 <button type="submit">SignUp</button>
             </form>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
             <a href="{{ url_for('start_page') }}" class="B-home">Back to Home</a>
         </div>
     </div>

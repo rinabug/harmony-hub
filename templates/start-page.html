@@ -20,6 +20,16 @@
         </g>
     </svg>
     <div class="start-page-container">
+        <!--logged out message-->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div id="flash-messages" class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
         <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="site-logo">
         <h1>Harmony Hub</h1>
         <div class="button-container">
