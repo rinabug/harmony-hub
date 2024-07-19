@@ -845,6 +845,19 @@ audio {
     background-color: #f0f0f0;
 }
 
+.send-request-button {
+    background-color: #5680E9;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.send-request-button:hover {
+    background-color: #84CEEB;
+}
+
 
 /* Responsive Design */
 @media (max-width: 768px) {

@@ -214,6 +214,20 @@ def game():
 def find_friend():
     return render_template('find_friend.html')
 
+#example data
+users = [
+    {'username': 'john_doe'},
+    {'username': 'jane_smith'},
+    {'username': 'alice_jones'},
+    {'username': 'bob_brown'}
+]
+
+@app.route('/search_friends', methods=['GET'])
+def search_friends():
+    query = request.args.get('q')
+    results = [user for user in users if query.lower() in user['username'].lower()]
+    return jsonify(results)
+
 def ensure_token_validity(token_info):
     """
     Ensure the Spotify token is valid, refreshing it if necessary.
@@ -222,6 +236,7 @@ def ensure_token_validity(token_info):
         token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
         session['token_info'] = token_info
     return token_info
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
