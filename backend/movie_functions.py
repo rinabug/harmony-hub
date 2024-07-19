@@ -72,10 +72,12 @@ def get_reviews(conn, username):
     return cursor.fetchall()
 
 def get_movie_recommendations(username):
-    #CHAT GPT PLACEHOLDER
-    url = "https://imdb-api.com/en/API/Top250Movies/YOUR_IMDB_API_KEY"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        return [movie['title'] for movie in data['items'][:5]]
-    return []
+    # This is a simple recommendation system. In a real-world scenario, 
+    # you'd use a more sophisticated algorithm based on user preferences.
+    movies = ia.get_top250_movies()
+    return [{'title': movie['title'], 'year': movie['year'], 'director': movie['directors'][0]['name'] if movie.get('directors') else 'Unknown'} for movie in movies[:5]]
+
+def get_show_recommendations(username):
+    # Similarly, this is a simple recommendation system for TV shows.
+    shows = ia.get_top250_tv()
+    return [{'title': show['title'], 'year': show['year'], 'creator': show['creators'][0]['name'] if show.get('creators') else 'Unknown'} for show in shows[:5]]

@@ -6,106 +6,150 @@
     <title>Discover</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <header>
-        <nav>
-            <h1> Music Buddy</h1>
-            <ul>
-                <li><a href="{{ url_for('index') }}">Home</a></li>
-                <li><a>Discover</a></li>
-                <li><a href="{{ url_for('collab') }}">Collab</a></li>
-                <li><a href="{{ url_for('profile') }}">Profile</a></li>
-            </ul>
-        </nav>
+        <button class="menu-toggle" id="menu-toggle">&#9776;</button>
+        <h1>Harmony Hub</h1>
     </header>
-    
-    <section class="Discover-section">
-        <div class="container">
-            <h1>Discover</h1>
-            <p>new music, artists, and concerts</p>
-        </div>
-    </section>
 
-    <main class="main-container">
-        <!-- Main content area -->
-        <section class="Input-section">
-            <div class="container">
-                <h2>Find Concerts</h2>
-                <form action="{{ url_for('discover') }}" method="POST">
-                    <label for="location">Location:</label>
-                    <input type="text" id="location" name="location" required>
-                    
-                    <label for="genre">Favorite Genre:</label>
-                    <input type="text" id="genre" name="genre" required>
-                    
-                    <label for="radius">Radius (miles):</label>
-                    <input type="number" id="radius" name="radius" required>
-                    
-                    <button type="submit">Get Recommendations</button>
-                </form>
+    <div id="main-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-cloud"></i>
+                <span>Harmony Hub</span>
             </div>
-        </section>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="{{ url_for('discover') }}"><i class="fas fa-search"></i> Discover</a></li>
+                    <li><a href="{{ url_for('collab') }}"><i class="fas fa-users"></i> Collab</a></li>
+                    <li><a href="{{ url_for('game') }}"><i class="fas fa-gamepad"></i> Games</a></li>
+                    <li><a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profile</a></li>
+                </ul>
+            </nav>
+            <a href="{{ url_for('logout') }}" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </aside>
 
-        <section class="Concert-section">
-            <div class="container">
-                <h2>Concerts</h2>
-                <div id="chatgptRecommendation">
-                    <h3>Personalized Recommendations</h3>
-                    {% if chatgpt_recommendation %}
-                        <p>{{ chatgpt_recommendation }}</p>
-                    {% else %}
-                        <p>No personalized recommendation available at this time.</p>
-                    {% endif %}
+        <main class="main-content" id="main-content">
+            <section class="discover-section">
+                <div class="container">
+                    <h1>Discover</h1>
+                    <p>New music, artists, movies, shows, and concerts</p>
                 </div>
-                <div id="allConcerts">
-                    <h3>All Upcoming Concerts</h3>
-                    {% if all_events %}
-                        <ul>
-                        {% for event in all_events %}
-                            <li>{{ event }}</li>
-                        {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>No upcoming concerts found.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="Music-section">
-            <div class="container">
-                <h2>Music Recommendations</h2>
-                <div id="musicContent">
-                    {% if music_recommendations %}
-                        <ul>
-                        {% for track in music_recommendations %}
-                            <li>
-                                <h3>{{ track.name }}</h3>
-                                <p>Artist: {{ track.artist }}</p>
-                                <p>Album: {{ track.album }}</p>
-                                {% if track.preview_url %}
-                                    <audio controls>
-                                        <source src="{{ track.preview_url }}" type="audio/mpeg">
-                                        Your browser does not support the audio element.
-                                    </audio>
-                                {% endif %}
-                                <a href="{{ track.external_url }}" target="_blank">Open in Spotify</a>
-                            </li>
-                        {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p>No music recommendations available. Try listening to more music!</p>
-                    {% endif %}
+            <!-- Bento-box sections -->
+            <section class="bento-box-section">
+                <div class="bento-box-container">
+                    <div class="bento-item small">
+                        <section class="input-section">
+                                <h2>Find Concerts</h2>
+                                <form action="{{ url_for('discover') }}" method="POST">
+                                    <label for="location">Location:</label>
+                                    <input type="text" id="location" name="location" required>
+                                    
+                                    <label for="genre">Favorite Genre:</label>
+                                    <input type="text" id="genre" name="genre" required>
+                                    
+                                    <label for="radius">Radius (miles):</label>
+                                    <input type="number" id="radius" name="radius" required>
+                                    
+                                    <button type="submit">Get Recommendations</button>
+                                </form>
+                        </section>
+                    </div>
+                    <div class="bento-item medium">
+                                <h2>Concerts</h2>
+                                <div id="chatgptRecommendation">
+                                    <h3>Personalized Recommendations</h3>
+                                    {% if chatgpt_recommendation %}
+                                        <p>{{ chatgpt_recommendation }}</p>
+                                    {% else %}
+                                        <p>No personalized recommendation available at this time.</p>
+                                    {% endif %}
+                                </div>
+                                <div id="allConcerts">
+                                    <h3>All Upcoming Concerts</h3>
+                                    {% if all_events %}
+                                        <ul>
+                                        {% for event in all_events %}
+                                            <li>{{ event }}</li>
+                                        {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p>No upcoming concerts found.</p>
+                                    {% endif %}
+                                </div>
+                    </div>
+                    <div class="bento-item medium">
+                                <h2>Movie and Show Recommendations</h2>
+                                <div id="movieRecommendations">
+                                    <!-- Movie recommendations content will be dynamically loaded -->
+                                    {% if movie_recommendations %}
+                                        <ul>
+                                        {% for movie in movie_recommendations %}
+                                            <li>
+                                                <h3>{{ movie.title }}</h3>
+                                                <p>Director: {{ movie.director }}</p>
+                                                <p>Streaming on: {{ movie.streaming_service }}</p>
+                                                <a href="{{ movie.external_url }}" target="_blank">More Info</a>
+                                            </li>
+                                        {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p>No movie recommendations available. Try watching more movies!</p>
+                                    {% endif %}
+                                </div>
+                    </div>
+                    <div class="bento-item large">
+                                <h2>Music Recommendations</h2>
+                                <div id="musicContent">
+                                    {% if music_recommendations %}
+                                        <ul>
+                                        {% for track in music_recommendations %}
+                                            <li>
+                                                <h3>{{ track.name }}</h3>
+                                                <p>Artist: {{ track.artist }}</p>
+                                                <p>Album: {{ track.album }}</p>
+                                                {% if track.preview_url %}
+                                                    <audio controls>
+                                                        <source src="{{ track.preview_url }}" type="audio/mpeg">
+                                                        Your browser does not support the audio element.
+                                                    </audio>
+                                                {% endif %}
+                                                <a href="{{ track.external_url }}" target="_blank">Open in Spotify</a>
+                                            </li>
+                                        {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <p>No music recommendations available. Try listening to more music!</p>
+                                    {% endif %}
+                                </div>
+                    </div>
                 </div>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <a href="{{ url_for('logout') }}" class="logout">Logout</a>
-    </footer>
+            </section>
+        </main>
+    </div>
 
     <script src="{{ url_for('static', filename='js/discover.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContainer = document.getElementById('main-container');
+            const mainContent = document.getElementById('main-content');
+            const header = document.querySelector('header');
+
+            menuToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('open');
+                mainContainer.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+                header.classList.toggle('expanded');
+            });
+        });
+    </script>
 </body>
 </html>
+

@@ -6,105 +6,88 @@
     <title>Collab</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        /* Retain original styles */
-        .playlist-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .playlist-item img {
-            width: 50px;
-            height: 50px;
-            margin-right: 10px;
-            border-radius: 50%;
-        }
-        .playlist-item a {
-            text-decoration: none;
-            color: #333;
-        }
-
-        /* New styles for global chat */
-        .message-item {
-            margin-bottom: 10px;
-        }
-        .message-item .username {
-            font-weight: bold;
-        }
-        .message-item .timestamp {
-            font-size: 0.8em;
-            color: #666;
-        }
-        #chatContent {
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <header>
-        <!-- Navbar or header content -->
-        <nav>
-            <h1>Music Buddy</h1>
-            <ul>
-                <li><a href="{{ url_for('index') }}">Home</a></li>
-                <li><a href="{{ url_for('discover') }}">Discover</a></li>
-                <li><a>Collab</a></li>
-                <li><a href="{{ url_for('profile') }}">Profile</a></li>
-            </ul>
-        </nav>
+        <button class="menu-toggle" id="menu-toggle">&#9776;</button>
+        <h1>Harmony Hub</h1>
     </header>
-    
-    <section class="collab-section">
-        <div class="container">
-            <h1>Collab</h1>
-            <p>Create and view playlists with friends</p>
-            <p>Chat with everyone!</p>
-        </div>
-    </section>
 
-    <main class="main-container">
-        <!-- Main content area -->
-        <section class="playlist-section">
-            <div class="container">
-                <h3>Your Top Playlists</h3>
-                <div class="playlist-container">
-                  {% for name, image_url, url in playlists_info %}
-                    <div class="playlist-item" id="playlistContent">
-                      <img src="{{ image_url }}" alt="{{ name }}" class="playlist-image">
-                      <div class="playlist-details">
-                        <h4><a href="{{ url }}" target="_blank">{{ name }}</a></h4>
-                        <!-- Additional details or controls if needed -->
-                      </div>
+    <div id="main-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-cloud"></i>
+                <span>Harmony Hub</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="{{ url_for('discover') }}"><i class="fas fa-search"></i> Discover</a></li>
+                    <li><a href="{{ url_for('collab') }}"><i class="fas fa-users"></i> Collab</a></li>
+                    <li><a href="{{ url_for('game') }}"><i class="fas fa-gamepad"></i> Games</a></li>
+                    <li><a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profile</a></li>
+                </ul>
+            </nav>
+            <a href="{{ url_for('logout') }}" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </aside>
+
+        <main class="main-content" id="main-content">
+            <section class="collab-section">
+                <div class="container">
+                    <h1>Collab</h1>
+                    <p>Create and connect with friends</p>
+                </div>
+            </section>
+
+            <!-- Bento-box sections -->
+            <section class="bento-box-section">
+                <div class="bento-box-container">
+                    <div class="bento-item small">
+                        <h2>Friend Activity</h2>
+                        <div id="friendActivityContent">
+                            <!-- Friend activity content will be loaded dynamically -->
+                        </div>
                     </div>
-                  {% endfor %}
+                    <div class="bento-item medium">
+                        <h2>Playlists Collab</h2>
+                        <div id="featuredPlaylistsContent">
+                            <!-- Featured playlists content will be loaded dynamically -->
+                        </div>
+                    </div>
+                    <div class="bento-item medium">
+                        <h2>Movie Watch-Party</h2>
+                        <div id="topChartsContent">
+                            <!-- Will be loaded dynamically -->
+                        </div>
+                    </div>
+                    <div class="bento-item large">
+                        <h2>Show Watch-Party</h2>
+                        <div id="recommendationsContent">
+                            <!-- Will be loaded dynamically -->
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </section>
-
-        <section class="chat-section">
-            <div class="container">
-                <h2>Global Chat</h2>
-                <div id="chatContent">
-                    <!-- Chat content will be loaded dynamically -->
-                </div>
-                <!-- Form to send messages -->
-                <form id="chatForm">
-                    <textarea name="message" id="messageInput" placeholder="Type your message"></textarea>
-                    <button type="submit">Send</button>
-                </form>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <!-- Footer content -->
-        <a href="{{ url_for('logout') }}" class="logout">Logout</a>
-    </footer>
+            </section>
+        </main>
+    </div>
 
     <script src="{{ url_for('static', filename='js/collab.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContainer = document.getElementById('main-container');
+            const mainContent = document.getElementById('main-content');
+            const header = document.querySelector('header');
+
+            menuToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('open');
+                mainContainer.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+                header.classList.toggle('expanded');
+            });
+        });
+    </script>
 </body>
 </html>
