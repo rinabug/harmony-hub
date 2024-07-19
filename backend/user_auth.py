@@ -42,4 +42,3 @@ def login_user(conn, identifier, password):
     if user and user[3] == hash_password(password):
         return user
     return None
-

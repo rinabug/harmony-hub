@@ -250,20 +250,25 @@
                         <h2>Info</h2>
                         <div class="profile-info">
                             <img src="{{ profile_picture_url }}" alt="Profile Picture" class="profile-picture">
-                            <p>Name: {{ username }}</p>
-                            <p>Email: {{ email }}</p>
-                            <p>Bio: {{ bio }}</p>
+
                         </div>
                     </div>
-                    <div class="bento-item medium">
-                        <h2>Favorite Music</h2>
-                        <div id="favoriteMusicContent">
-                            <!-- Favorite songs/artists/genres content will be loaded dynamically -->
-                            <ul>
-                                {% for item in favorite_music %}
-                                    <li>{{ item }}</li>
-                                {% endfor %}
-                            </ul>
+                    <div class="bento-box-container">
+                        <div class="bento-item medium">
+                            <h2>Favorite Music</h2>
+                            <div id="favoriteMusicContent">
+                                <ul>
+                                    {% for item in favorite_music %}
+                                        <li class="favorite-music-item">
+                                            <img src="{{ item['album_image'] }}" alt="{{ item['name'] }}">
+                                            <a href="{{ item['spotify_url'] }}" target="_blank">
+                                                {{ item['name'] }} - {{ item['artist'] }}
+                                                <i class="fas fa-external-link-alt external-link-icon"></i>
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
                         </div>
                     </div>
                     <div class="bento-item medium">
@@ -300,8 +305,8 @@
                         </div>
                     </div>
                     <div class="bento-item large">
-                        <h2>Edit Your Profile</h2>
                         <div class="profile" id="profile-section">
+                            <h2>Edit Your Profile</h2>
                             <div class="profile-container">
                                 <div class="profile-picture-placeholder" id="profile-picture-placeholder">
                                     <i class="fas fa-user-circle"></i>
@@ -351,11 +356,15 @@
             });
 
             const userBtn = document.querySelector('#user-btn');
+            const editProfileText = document.querySelector('#edit-profile-text');
             const profile = document.querySelector('#profile-section');
 
-            userBtn.addEventListener('click', function() {
+            function toggleProfile() {
                 profile.classList.toggle('active');
-            });
+            }
+
+            userBtn.addEventListener('click', toggleProfile);
+            editProfileText.addEventListener('click', toggleProfile);
 
             document.querySelector('#profile-form').addEventListener('submit', function(event) {
                 event.preventDefault();

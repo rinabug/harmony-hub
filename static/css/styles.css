@@ -745,6 +745,39 @@ audio {
     font-size: 0.8em;
 }
 
+/* Favorite Music Section Styles */
+.favorite-music-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    transition: background-color 0.3s;
+}
+
+.favorite-music-item:hover {
+    background-color: #f0f0f0;
+}
+
+.favorite-music-item img {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+    border-radius: 50%;
+}
+
+.favorite-music-item a {
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+
+.favorite-music-item a .external-link-icon {
+    margin-left: 5px;
+    color: #888;
+    font-size: 0.8em;
+}
+
 /*Connect page designs*/
 .c-button {
     padding: 10px 20px;

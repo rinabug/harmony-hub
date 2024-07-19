@@ -2,10 +2,13 @@ from dotenv import load_dotenv
 import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from werkzeug.utils import secure_filename
+import hashlib
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
 from backend.user_auth import create_users_table, is_valid_email, is_valid_password, register_user, login_user
+from backend.profile_management import create_profiles_table, get_profile_db_connection, update_profile, get_profile
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
 from backend.recent_listens import get_recently_played_tracks
@@ -32,15 +35,20 @@ sp_oauth = SpotifyOAuth(
     show_dialog=True
 )
 
-def get_db_connection():
+def get_user_db_connection():
     conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
     return conn
 
 @app.before_request
 def initialize_database():
-    conn = get_db_connection()
-    create_users_table(conn)
-    conn.close()
+    user_conn = get_user_db_connection()
+    create_users_table(user_conn)
+    user_conn.close()
+    
+    profile_conn = get_profile_db_connection()
+    create_profiles_table(profile_conn)
+    profile_conn.close()
 
 @app.route('/')
 def start_page():
@@ -73,6 +81,8 @@ def index():
         return redirect(url_for('login'))
 
     username = session['username']
+    profile_conn = get_profile_db_connection()
+    user_profile = get_profile(profile_conn, username)
 
     token_info = session.get('token_info', None)
     if not token_info:
@@ -86,7 +96,7 @@ def index():
         playlists_info = [(pl['name'], pl['images'][0]['url'], pl['external_urls']['spotify']) for pl in playlists['items']]
 
         # Fetch featured playlists for top charts section
-        top_charts = sp.featured_playlists(limit=5)
+        top_charts = sp.featured_playlists(limit=10)
         top_charts_info = [(pl['name'], pl['images'][0]['url'], pl['external_urls']['spotify']) for pl in top_charts['playlists']['items']]
 
         #music recommendations
@@ -100,7 +110,7 @@ def index():
         flash("There was an error connecting to Spotify. Please try logging in again.")
         return redirect(url_for('loginSpotify'))
 
-    return render_template('index.html', username=username, playlists_info=playlists_info, top_charts_info=top_charts_info, music_recommendations=music_recommendations, recently_played_tracks=recently_played_tracks)
+    return render_template('index.html', username=username, playlists_info=playlists_info, top_charts_info=top_charts_info, music_recommendations=music_recommendations, recently_played_tracks=recently_played_tracks, user_profile=user_profile)
 
 @app.route('/logout')
 def logout():
@@ -114,7 +124,7 @@ def signup():
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
-        conn = get_db_connection()
+        conn = get_user_db_connection()
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
@@ -129,6 +139,8 @@ def signup():
         else:
             success = register_user(conn, username, email, password)
             if success:
+                profile_conn = get_profile_db_connection()
+                update_profile(profile_conn, username, email, '', '')
                 session['username'] = username
                 flash('Registration successful. Please connect a music platform.', 'success')
                 return redirect(url_for('connect'))
@@ -141,10 +153,10 @@ def login():
     if request.method == 'POST':
         identifier = request.form.get('identifier')
         password = request.form.get('password')
-        conn = get_db_connection()
+        conn = get_user_db_connection()
         user = login_user(conn, identifier, password)
         if user:
-            session['username'] = user[1]
+            session['username'] = user['username']
             flash('Login successful. Please connect a music platform.', 'success')
             return redirect(url_for('connect'))
         else:
@@ -200,7 +212,39 @@ def discover():
 
 @app.route('/profile')
 def profile():
-    return render_template('profile.html')
+    if 'username' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
+    username = session['username']
+    
+    token_info = session.get('token_info', None)
+    if not token_info:
+        flash("Please connect your Spotify account.")
+        return redirect(url_for('loginSpotify'))
+
+    try:
+        token_info = ensure_token_validity(token_info)
+        sp = Spotify(auth=token_info['access_token'])
+        
+        # Fetch user's top tracks
+        top_tracks = sp.current_user_top_tracks(limit=10)
+        favorite_music = [
+            {
+                'name': track['name'],
+                'artist': track['artists'][0]['name'],
+                'album_image': track['album']['images'][0]['url'],
+                'spotify_url': track['external_urls']['spotify']
+            }
+            for track in top_tracks['items']
+        ]
+
+    except Exception as e:
+        print(f"Error fetching Spotify data: {e}")
+        flash("There was an error connecting to Spotify. Please try logging in again.")
+        return redirect(url_for('loginSpotify'))
+
+    return render_template('profile.html', username=username, favorite_music=favorite_music)
 
 @app.route('/collab')
 def collab():
