@@ -104,31 +104,6 @@
                                     {% endif %}
                                 </div>
                     </div>
-                    <div class="bento-item large">
-                                <h2>Music Recommendations</h2>
-                                <div id="musicContent">
-                                    {% if music_recommendations %}
-                                        <ul>
-                                        {% for track in music_recommendations %}
-                                            <li>
-                                                <h3>{{ track.name }}</h3>
-                                                <p>Artist: {{ track.artist }}</p>
-                                                <p>Album: {{ track.album }}</p>
-                                                {% if track.preview_url %}
-                                                    <audio controls>
-                                                        <source src="{{ track.preview_url }}" type="audio/mpeg">
-                                                        Your browser does not support the audio element.
-                                                    </audio>
-                                                {% endif %}
-                                                <a href="{{ track.external_url }}" target="_blank">Open in Spotify</a>
-                                            </li>
-                                        {% endfor %}
-                                        </ul>
-                                    {% else %}
-                                        <p>No music recommendations available. Try listening to more music!</p>
-                                    {% endif %}
-                                </div>
-                    </div>
                 </div>
             </section>
         </main>
@@ -153,5 +128,3 @@
     </script>
 </body>
 </html>
-
-

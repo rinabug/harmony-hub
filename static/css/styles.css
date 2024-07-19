@@ -10,7 +10,7 @@ body {
     margin: 0;
     padding: 0;
     color: #333;
-    overflow: hidden;
+    overflow: auto;
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -25,6 +25,9 @@ body {
     display: flex;
     flex: 1;
     transition: margin-left 0.3s ease, padding-left 0.3s ease;
+    overflow-y: auto; /* Allow the main container to be scrollable */
+    padding: 100px;
+    margin-top: 300px;
 }
 
 #main-container.collapsed {
@@ -37,7 +40,7 @@ body {
     left: 0;
     top: 0;
     width: 250px;
-    height: 100%;
+    height: 100%; 
     background-color: rgba(86, 128, 233, 0.9); /* Updated color */
     color: #ffffff;
     transition: transform 0.3s ease;
@@ -121,8 +124,8 @@ body {
     margin-left: 0;
     transition: margin-left 0.3s ease;
     padding: 40px;
-    padding-top: 80px; /* Adjust for header height */
-    overflow-y: auto;
+    padding-top: 20px; /* Adjust for header height */
+    overflow-y: auto; /* Allow the main content area to be scrollable */
 }
 
 .main-content.expanded {
@@ -139,6 +142,7 @@ header {
     position: fixed;
     top: 0;
     z-index: 1000;
+    height: 60px;
     transition: margin-left 0.3s ease; /* Add transition for smooth movement */
 }
 
@@ -161,6 +165,7 @@ header.expanded {
 header h1 {
     margin: 0;
     font-size: 24px;
+    line-height: 60px;
 }
 
 /* Canvas Background */
@@ -353,6 +358,7 @@ a:hover {
     color: white;
     border-radius: 8px;
     margin-bottom: 30px;
+    top: 100px;
 }
 
 .welcome-section h1 {
@@ -541,6 +547,92 @@ section {
     gap: 20px;
 }
 
+/* Music Recommendations */
+.music-recommendations {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.music-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.album-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.music-item h3 {
+    margin: 10px 0;
+    font-size: 1.2em;
+}
+
+.music-item p {
+    margin: 5px 0;
+}
+
+audio {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.spotify-link {
+    display: block;
+    margin-top: 10px;
+    color: #1DB954;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.spotify-link:hover {
+    text-decoration: underline;
+}
+
+/*Recent Listens*/
+.music-recommendations, .recently-played-tracks {
+    display: flex;
+    flex-direction: column;
+}
+
+.music-item {
+    margin-bottom: 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.album-image {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+}
+
+.spotify-link {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+    color: #1DB954; /* Spotify green color */
+    text-decoration: none;
+}
+
+.spotify-link:hover {
+    text-decoration: underline;
+}
+
 /* Bento Box Styles */
 .bento-box-section {
     padding: 20px;
@@ -552,8 +644,9 @@ section {
 
 .bento-box-container {
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));/* Adjust for responsive grid layout */
     gap: 20px;
+    overflow-y: auto; /* Allow the bento box sections to be scrollable */
 }
 
 .bento-item {
@@ -562,6 +655,8 @@ section {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 20px;
     text-align: center;
+    overflow-y: auto; /* Allow individual bento items to be scrollable */
+    max-height: 300px; /* Adjust the height as needed */
 }
 
 .bento-item.large {

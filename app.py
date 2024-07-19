@@ -6,6 +6,9 @@ from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
 from backend.user_auth import create_users_table, is_valid_email, is_valid_password, register_user, login_user
+from backend.concert_recommendations import get_concert_recommendations
+from backend.music_recommendation import get_music_recommendations
+from backend.recent_listens import get_recently_played_tracks
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
@@ -58,7 +61,7 @@ def callback():
         flash("Please log in to your account first.")
         return redirect(url_for('login'))
     
-    token_info = sp_oauth.get_access_token(request.args['code'], as_dict=False)
+    token_info = sp_oauth.get_access_token(request.args['code'], as_dict=True)
     session['token_info'] = token_info
     flash('Spotify account connected successfully.', 'success')
     return redirect(url_for('index'))
@@ -77,7 +80,8 @@ def index():
         return redirect(url_for('loginSpotify'))
 
     try:
-        sp = Spotify(auth=token_info)
+        token_info = ensure_token_validity(token_info)
+        sp = Spotify(auth=token_info['access_token'])
         playlists = sp.current_user_playlists(limit=5)
         playlists_info = [(pl['name'], pl['images'][0]['url'], pl['external_urls']['spotify']) for pl in playlists['items']]
 
@@ -85,12 +89,18 @@ def index():
         top_charts = sp.featured_playlists(limit=5)
         top_charts_info = [(pl['name'], pl['images'][0]['url'], pl['external_urls']['spotify']) for pl in top_charts['playlists']['items']]
 
+        #music recommendations
+        music_recommendations = get_music_recommendations(sp)
+
+        # Fetch recently played tracks
+        recently_played_tracks = get_recently_played_tracks(sp)
+
     except Exception as e:
         print(f"Error fetching Spotify playlists: {e}")
         flash("There was an error connecting to Spotify. Please try logging in again.")
         return redirect(url_for('loginSpotify'))
 
-    return render_template('index.html', username=username, playlists_info=playlists_info, top_charts_info=top_charts_info)
+    return render_template('index.html', username=username, playlists_info=playlists_info, top_charts_info=top_charts_info, music_recommendations=music_recommendations, recently_played_tracks=recently_played_tracks)
 
 @app.route('/logout')
 def logout():
@@ -163,13 +173,48 @@ def connect():
             #flash('Other music platform connection is not implemented yet.', 'info')
     return render_template('connect.html')
 
+@app.route('/discover', methods=['GET', 'POST'])
+def discover():
+    if 'username' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
+    token_info = session.get('token_info', None)
+    if not token_info:
+        flash("Please connect your Spotify account.")
+        return redirect(url_for('loginSpotify'))
+
+    try:
+        token_info = ensure_token_validity(token_info)
+        sp = Spotify(auth=token_info['access_token'])
+
+        if request.method == 'POST':
+            user_location = request.form.get('location')
+            favorite_genre = request.form.get('genre')
+            radius = int(request.form.get('radius'))
+
+            top_artists = sp.current_user_top_artists(limit=5, time_range='short_term')
+            genres = set()
+            for artist in top_artists['items']:
+                genres.update(artist['genres'])
+            top_genres = list(genres)[:3]
+            top_genres.append(favorite_genre)
+
+            chatgpt_recommendation, all_events = get_concert_recommendations(user_location, top_genres, radius)
+
+            return render_template('discover.html',
+                                   chatgpt_recommendation=chatgpt_recommendation,
+                                   all_events=all_events)
+    except Exception as e:
+        print(f"Error with recommendations: {e}")
+        flash("There was an error.")
+        return redirect(url_for('loginSpotify'))
+
+    return render_template('discover.html')
+
 @app.route('/profile')
 def profile():
     return render_template('profile.html')
-
-@app.route('/discover')
-def discover():
-    return render_template('discover.html')
 
 @app.route('/collab')
 def collab():
@@ -182,6 +227,15 @@ def game():
 @app.route('/find_friend')
 def find_friend():
     return render_template('find_friend.html')
+
+def ensure_token_validity(token_info):
+    """
+    Ensure the Spotify token is valid, refreshing it if necessary.
+    """
+    if sp_oauth.is_token_expired(token_info):
+        token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
+        session['token_info'] = token_info
+    return token_info
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
