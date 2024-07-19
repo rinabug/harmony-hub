@@ -40,17 +40,11 @@
                     <p>This is your personalized user home page.</p>
                 </div>
             </section>
-
+        
             <!-- Bento-box sections -->
             <section class="bento-box-section">
                 <div class="bento-box-container">
                     <div class="bento-item small">
-                        <h2>Friend Activity</h2>
-                        <div id="friendActivityContent">
-                            <!-- Friend activity content will be loaded dynamically -->
-                        </div>
-                    </div>
-                    <div class="bento-item medium">
                         <h2>Featured Playlists</h2>
                         <div id="featuredPlaylistsContent">
                             {% if playlists_info %}
@@ -70,7 +64,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="bento-item medium">
+                    <div class="bento-item small">
                         <h2>Top Charts</h2>
                         <div id="topChartsContent">
                             {% if top_charts_info %}
@@ -90,22 +84,82 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="bento-item large">
-                        <h2>Recommendations</h2>
-                        <div id="recommendationsContent">
-                            <!-- Music and movie recommendations content will be loaded dynamically -->
+                    <div class="bento-item small">
+                        <h2>Music Recommendations</h2>
+                        <div id="musicContent">
+                            {% if music_recommendations %}
+                                <div class="music-recommendations">
+                                    {% for track in music_recommendations %}
+                                        <div class="music-item">
+                                            <img src="{{ track.album_image_url }}" alt="{{ track.album }}" class="album-image">
+                                            <h3>{{ track.name }}</h3>
+                                            <p>Artist: {{ track.artist }}</p>
+                                            <p>Album: {{ track.album }}</p>
+                                            {% if track.preview_url %}
+                                                <audio controls>
+                                                    <source src="{{ track.preview_url }}" type="audio/mpeg">
+                                                    Your browser does not support the audio element.
+                                                </audio>
+                                            {% endif %}
+                                            <a href="{{ track.external_url }}" target="_blank" class="spotify-link">Open in Spotify</a>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p>No music recommendations available. Try listening to more music!</p>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="bento-item small">
-                        <h2>Real-Time Messaging</h2>
-                        <div id="messagingContent">
-                            <!-- Real-time messaging content will be loaded dynamically -->
+                        <h2>Recently Played Tracks</h2>
+                        <div id="recentlyPlayedContent">
+                            {% if recently_played_tracks %}
+                                <div class="recently-played-tracks">
+                                    {% for track in recently_played_tracks %}
+                                        <div class="music-item">
+                                            <img src="{{ track.album_image_url }}" alt="{{ track.album }}" class="album-image">
+                                            <h3>{{ track.name }}</h3>
+                                            <p>Artist: {{ track.artist }}</p>
+                                            <p>Album: {{ track.album }}</p>
+                                            {% if track.preview_url %}
+                                                <audio controls>
+                                                    <source src="{{ track.preview_url }}" type="audio/mpeg">
+                                                    Your browser does not support the audio element.
+                                                </audio>
+                                            {% endif %}
+                                            <a href="{{ track.external_url }}" target="_blank" class="spotify-link">Open in Spotify</a>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p>No recently played tracks available. Try listening to more music!</p>
+                            {% endif %}
                         </div>
                     </div>
-                    <div class="bento-item medium">
-                        <h2>Friend Suggestions</h2>
-                        <div id="friendSuggestionsContent">
-                            <!-- Friend suggestions content will be loaded dynamically -->
+                    <div class="bento-item small">
+                        <h2>Movie and Show Recommendations</h2>
+                        <div id="movieRecommendations">
+                            <!-- Movie recommendations content will be dynamically loaded -->
+                            {% if movie_recommendations %}
+                                <ul>
+                                {% for movie in movie_recommendations %}
+                                    <li>
+                                        <h3>{{ movie.title }}</h3>
+                                        <p>Director: {{ movie.director }}</p>
+                                        <p>Streaming on: {{ movie.streaming_service }}</p>
+                                        <a href="{{ movie.external_url }}" target="_blank">More Info</a>
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>No movie recommendations available. Try watching more movies!</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="bento-item small">
+                        <h2>Recently Watched</h2>
+                        <div id="recentlyWatchedContent">
+                            <!--Recently watched content here-->
                         </div>
                     </div>
                 </div>
