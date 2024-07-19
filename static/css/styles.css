@@ -633,6 +633,36 @@ audio {
     text-decoration: underline;
 }
 
+/* Concerts Section */
+.recommendation {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.concert-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.concert-item {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.concert-item p {
+    margin: 5px 0;
+}
+
+.concert-item strong {
+    color: #333;
+}
+
+
 /* Bento Box Styles */
 .bento-box-section {
     padding: 20px;

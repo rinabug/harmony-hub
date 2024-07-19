@@ -136,6 +136,26 @@
                             {% endif %}
                         </div>
                     </div>
+                    <div class="bento-item medium">
+                        <h2>Movie and Show Recommendations</h2>
+                        <div id="movieRecommendations">
+                            <!-- Movie recommendations content will be dynamically loaded -->
+                            {% if movie_recommendations %}
+                                <ul>
+                                {% for movie in movie_recommendations %}
+                                    <li>
+                                        <h3>{{ movie.title }}</h3>
+                                        <p>Director: {{ movie.director }}</p>
+                                        <p>Streaming on: {{ movie.streaming_service }}</p>
+                                        <a href="{{ movie.external_url }}" target="_blank">More Info</a>
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>No movie recommendations available. Try watching more movies!</p>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </section>
 

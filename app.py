@@ -179,36 +179,22 @@ def discover():
         flash("Please log in to access this page.")
         return redirect(url_for('login'))
 
-    token_info = session.get('token_info', None)
-    if not token_info:
-        flash("Please connect your Spotify account.")
-        return redirect(url_for('loginSpotify'))
+    if request.method == 'POST':
+        user_location = request.form.get('location')
+        favorite_genre = request.form.get('genre')
+        radius = int(request.form.get('radius'))
 
-    try:
-        token_info = ensure_token_validity(token_info)
-        sp = Spotify(auth=token_info['access_token'])
-
-        if request.method == 'POST':
-            user_location = request.form.get('location')
-            favorite_genre = request.form.get('genre')
-            radius = int(request.form.get('radius'))
-
-            top_artists = sp.current_user_top_artists(limit=5, time_range='short_term')
-            genres = set()
-            for artist in top_artists['items']:
-                genres.update(artist['genres'])
-            top_genres = list(genres)[:3]
-            top_genres.append(favorite_genre)
-
+        try:
+            top_genres = [favorite_genre]
             chatgpt_recommendation, all_events = get_concert_recommendations(user_location, top_genres, radius)
 
             return render_template('discover.html',
                                    chatgpt_recommendation=chatgpt_recommendation,
                                    all_events=all_events)
-    except Exception as e:
-        print(f"Error with recommendations: {e}")
-        flash("There was an error.")
-        return redirect(url_for('loginSpotify'))
+        except Exception as e:
+            print(f"Error with recommendations: {e}")
+            flash("There was an error fetching recommendations.")
+            return redirect(url_for('discover'))
 
     return render_template('discover.html')
 
