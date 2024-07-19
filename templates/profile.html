@@ -23,6 +23,12 @@
     cursor: pointer;
 }
 
+#edit-profile-text {
+    margin-left: 8px; /* Adjust as needed to space the text from the icon */
+    font-size: 16px;
+    color: #333; /* Adjust color to match your design */
+}
+
 /* Profile section styles */
 .profile {
     display: none; /* Hide by default */
@@ -151,6 +157,54 @@
     object-fit: cover;
 }
 
+.bento-box-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.bento-item {
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.bento-item.large {
+    flex: 1 1 100%;
+}
+
+.bento-item.medium {
+    flex: 1 1 45%;
+}
+
+.bento-item.small {
+    flex: 1 1 30%;
+}
+
+.profile-container {
+    max-width: none;
+    text-align: center;
+}
+
+.profile-picture-placeholder {
+    margin: 20px auto;
+}
+
+/* Hide the profile section initially */
+.profile {
+    display: none;
+}
+
+/* Display the profile section within the bento box */
+.profile.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
 </style>
 </head>
 <body>
@@ -158,6 +212,7 @@
         <button class="menu-toggle" id="menu-toggle">&#9776;</button>
         <h1>Harmony Hub</h1>
         <div class="icons">
+        <span id="edit-profile-text">Edit Your Profile</span>
          <i id="user-btn" class="fas fa-user"></i>
     </div>
     </header>
@@ -244,41 +299,42 @@
                             </ul>
                         </div>
                     </div>
+                    <div class="bento-item large">
+                        <h2>Edit Your Profile</h2>
+                        <div class="profile" id="profile-section">
+                            <div class="profile-container">
+                                <div class="profile-picture-placeholder" id="profile-picture-placeholder">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <input type="file" id="upload-photo" style="display: none;">
+                                <button id="upload-photo-btn">Upload your photo</button>
+                                <form id="profile-form">
+                                    <div class="form-group">
+                                        <label for="full-name">Full Name</label>
+                                        <input type="text" id="full-name" name="full_name" value="">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="email-address">Email Address</label>
+                                        <input type="email" id="email-address" name="email_address" value="">
+                                    </div>
+                                    <div class="form-group">
+                                        <a href="#" class="change-password-link">Change Password</a>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="current-password">To save changes, please enter your current password</label>
+                                        <input type="password" id="current-password" name="current_password">
+                                    </div>
+                                    <button type="submit" class="save-changes-btn">Save changes</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>            
-            
         </main>
     </div>
-<div class="profile" id="profile-section">
-        <div class="profile-container">
-            <h2>Edit Your Profile</h2>
-            <div class="profile-picture-placeholder" id="profile-picture-placeholder">
-                <i class="fas fa-user-circle"></i>
-            </div>
-            <input type="file" id="upload-photo" style="display: none;">
-            <button id="upload-photo-btn">Upload your photo</button>
-            <form id="profile-form">
-                <div class="form-group">
-                    <label for="full-name">Full Name</label>
-                    <input type="text" id="full-name" name="full_name" value="">
-                </div>
-                <div class="form-group">
-                    <label for="email-address">Email Address</label>
-                    <input type="email" id="email-address" name="email_address" value="">
-                </div>
-                <div class="form-group">
-                    <a href="#" class="change-password-link">Change Password</a>
-                </div>
-                <div class="form-group">
-                    <label for="current-password">To save changes, please enter your current password</label>
-                    <input type="password" id="current-password" name="current_password">
-                </div>
-                <button type="submit" class="save-changes-btn">Save changes</button>
-            </form>
-        </div>
-    </div>
 
-  <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const menuToggle = document.getElementById('menu-toggle');
