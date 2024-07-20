@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             document.getElementById('username-error').innerText = data.errors.username;
                         }
                         if (data.errors.email) {
-                            document.getElementById('email-address').classList.add('error');
+                            document.getElementById('email_address').classList.add('error');
                             document.getElementById('email-error').innerText = data.errors.email;
                         }
                     }
@@ -70,4 +70,3 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-

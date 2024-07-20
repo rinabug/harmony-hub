@@ -254,9 +254,9 @@ def profile():
         flash("Please log in to access this page.")
         return redirect(url_for('login'))
 
-    profile_conn = get_db_connection()
+    conn = get_db_connection()
     username = session['username']
-    user_profile = get_profile(profile_conn, username)
+    user_profile = get_profile(conn, username)
     
     if request.method == 'POST':
         new_username = request.form['username']
@@ -265,20 +265,19 @@ def profile():
         current_password = request.form['current_password']
         profile_picture = user_profile['profile_picture']
 
-        user_conn = get_db_connection()
-        user = login_user(user_conn, username, current_password)
+        user = login_user(conn, username, current_password)
         
         errors = {}
 
         if user:
             if new_username != username:
-                cursor = user_conn.cursor()
+                cursor = conn.cursor()
                 cursor.execute("SELECT * FROM users WHERE username = ?", (new_username,))
                 if cursor.fetchone():
                     errors['username'] = 'Username already exists.'
             
             if email_address != user_profile['email']:
-                cursor = user_conn.cursor()
+                cursor = conn.cursor()
                 cursor.execute("SELECT * FROM users WHERE email = ?", (email_address,))
                 if cursor.fetchone():
                     errors['email'] = 'Email already exists.'
@@ -295,9 +294,20 @@ def profile():
                     file.save(file_path)
                     profile_picture = file_path
 
-            update_profile(profile_conn, new_username, email_address, bio, profile_picture)
-            flash('Profile updated successfully', 'success')
+            cursor = conn.cursor()
+            cursor.execute('''
+            UPDATE users
+            SET username = ?, email = ?
+            WHERE id = ?
+            ''', (new_username, email_address, user['id']))
+            cursor.execute('''
+            UPDATE profiles
+            SET username = ?, email = ?, bio = ?, profile_picture = ?
+            WHERE user_id = ?
+            ''', (new_username, email_address, bio, profile_picture, user['id']))
+            conn.commit()
 
+            flash('Profile updated successfully', 'success')
             session['username'] = new_username
         else:
             flash('Incorrect password. Please try again.', 'danger')
@@ -313,7 +323,6 @@ def profile():
         token_info = ensure_token_validity(token_info)
         sp = Spotify(auth=token_info['access_token'])
         
-        # Fetch user's top tracks
         top_tracks = sp.current_user_top_tracks(limit=10)
         favorite_music = [
             {
@@ -325,12 +334,16 @@ def profile():
             for track in top_tracks['items']
         ]
 
+        # Fetch recently played tracks
+        recently_played_tracks = get_recently_played_tracks(sp)
+
     except Exception as e:
         print(f"Error fetching Spotify data: {e}")
         flash("There was an error connecting to Spotify. Please try logging in again.")
         return redirect(url_for('loginSpotify'))
 
-    return render_template('profile.html', username=username, favorite_music=favorite_music, user_profile=user_profile)
+    return render_template('profile.html', username=username, favorite_music=favorite_music, user_profile=user_profile, recently_played_tracks=recently_played_tracks)
+
 
 
 @app.route('/collab')
