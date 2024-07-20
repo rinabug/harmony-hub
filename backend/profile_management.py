@@ -6,7 +6,7 @@ def create_profiles_table(conn):
     CREATE TABLE IF NOT EXISTS profiles (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE NOT NULL,
+        email TEXT NOT NULL,
         bio TEXT,
         profile_picture TEXT
     )

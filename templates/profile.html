@@ -69,6 +69,12 @@
     justify-content: center; /* Center the icon/image horizontally */
 }
 
+.profile-picture-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+}
+
 .profile h2 {
     margin-bottom: 20px;
     color: #5680E9; /* Make the color blue */
@@ -205,6 +211,51 @@
     align-items: center;
     justify-content: center;
 }
+
+/* Info Section Styles */
+.info-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.info-section .profile-picture {
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.info-section .profile-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.info-section .profile-details h2 {
+    margin: 0 0 10px 0;
+    color: #5680E9; /* Adjust color to match your design */
+    font-size: 1.5em;
+}
+
+.info-section .profile-details p {
+    margin: 0 0 5px 0;
+    font-size: 1em;
+    color: #555;
+}
+
+.info-section .profile-details .bio {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #333;
+}
 </style>
 </head>
 <body>
@@ -246,11 +297,24 @@
             </section>
             <section class="bento-box-section">
                 <div class="bento-box-container">
-                    <div class="bento-item large">
-                        <h2>Info</h2>
-                        <div class="profile-info">
-                            <img src="{{ profile_picture_url }}" alt="Profile Picture" class="profile-picture">
-
+                    <div class="bento-item small">
+                        <div class="info-section">
+                            <img src="{{ user_profile['profile_picture'] }}" alt="Profile Picture" class="profile-picture">
+                            <div class="profile-details">
+                                <h2>{{ user_profile['username'] }}</h2>
+                                <p class="bio">{{ user_profile['bio'] }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bento-item small">
+                        <h2>Badges & Achievements</h2>
+                        <div id="badgesContent">
+                            <!-- Badges and achievements content will be loaded dynamically -->
+                            <ul>
+                                {% for badge in badges %}
+                                    <li>{{ badge }}</li>
+                                {% endfor %}
+                            </ul>
                         </div>
                     </div>
                     <div class="bento-box-container">
@@ -282,17 +346,6 @@
                             </ul>
                         </div>
                     </div>
-                    <div class="bento-item small">
-                        <h2>Badges & Achievements</h2>
-                        <div id="badgesContent">
-                            <!-- Badges and achievements content will be loaded dynamically -->
-                            <ul>
-                                {% for badge in badges %}
-                                    <li>{{ badge }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
                     <div class="bento-item large">
                         <h2>Recent Activity</h2>
                         <div id="recentActivityContent">
@@ -308,19 +361,31 @@
                         <div class="profile" id="profile-section">
                             <h2>Edit Your Profile</h2>
                             <div class="profile-container">
-                                <div class="profile-picture-placeholder" id="profile-picture-placeholder">
-                                    <i class="fas fa-user-circle"></i>
-                                </div>
-                                <input type="file" id="upload-photo" style="display: none;">
-                                <button id="upload-photo-btn">Upload your photo</button>
-                                <form id="profile-form">
+                                <div class="profile-container">
+                                    <div class="profile-picture-placeholder" id="profile-picture-placeholder">
+                                        {% if user_profile['profile_picture'] %}
+                                            <img src="{{ user_profile['profile_picture'] }}" alt="Profile Picture">
+                                        {% else %}
+                                            <i class="fas fa-user-circle"></i>
+                                        {% endif %}
+                                    </div>
+                                    <form id="profile-form" method="post" action="{{ url_for('profile') }}" enctype="multipart/form-data">
+                                        <input type="file" id="upload-photo" name="profile_picture" style="display: none;">
+                                        <button type="button" id="upload-photo-btn">Upload your photo</button>
+                                <form id="profile-form" method="post" action="{{ url_for('profile') }}" enctype="multipart/form-data">
                                     <div class="form-group">
-                                        <label for="full-name">Full Name</label>
-                                        <input type="text" id="full-name" name="full_name" value="">
+                                        <label for="username">Username</label>
+                                        <input type="text" id="username" name="username" value="{{ user_profile['username'] }}">
+                                        <div class="error-message" id="username-error"></div>
                                     </div>
                                     <div class="form-group">
                                         <label for="email-address">Email Address</label>
-                                        <input type="email" id="email-address" name="email_address" value="">
+                                        <input type="email" id="email-address" name="email_address" value="{{ user_profile['email'] }}">
+                                        <div class="error-message" id="email-error"></div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bio">Bio</label>
+                                        <textarea id="bio" name="bio">{{ user_profile['bio'] }}</textarea>
                                     </div>
                                     <div class="form-group">
                                         <a href="#" class="change-password-link">Change Password</a>
@@ -340,56 +405,5 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const menuToggle = document.getElementById('menu-toggle');
-            const sidebar = document.getElementById('sidebar');
-            const mainContainer = document.getElementById('main-container');
-            const mainContent = document.getElementById('main-content');
-            const header = document.querySelector('header');
-
-            menuToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('open');
-                mainContainer.classList.toggle('collapsed');
-                mainContent.classList.toggle('expanded');
-                header.classList.toggle('expanded');
-            });
-
-            const userBtn = document.querySelector('#user-btn');
-            const editProfileText = document.querySelector('#edit-profile-text');
-            const profile = document.querySelector('#profile-section');
-
-            function toggleProfile() {
-                profile.classList.toggle('active');
-            }
-
-            userBtn.addEventListener('click', toggleProfile);
-            editProfileText.addEventListener('click', toggleProfile);
-
-            document.querySelector('#profile-form').addEventListener('submit', function(event) {
-                event.preventDefault();
-                alert('Profile updated!');
-            });
-
-            const uploadPhotoBtn = document.getElementById('upload-photo-btn');
-            const uploadPhotoInput = document.getElementById('upload-photo');
-            const profilePicturePlaceholder = document.getElementById('profile-picture-placeholder');
-
-            uploadPhotoBtn.addEventListener('click', function() {
-                uploadPhotoInput.click();
-            });
-
-            uploadPhotoInput.addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        profilePicturePlaceholder.innerHTML = `<img src="${e.target.result}" alt="Profile Picture">`;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        });
-    </script>
 </body>
 </html>

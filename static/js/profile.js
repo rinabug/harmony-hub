@@ -1,109 +1,73 @@
-document.addEventListener('DOMContentLoaded', () => {
-    loadFriends();
-    loadBadges();
-    setupSendFriendRequestButton();
-    loadFriendRequests();
-});
+document.addEventListener('DOMContentLoaded', function() {
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const mainContainer = document.getElementById('main-container');
+    const mainContent = document.getElementById('main-content');
+    const header = document.querySelector('header');
 
-function loadFriends() {
-    fetch('/view_friends')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const friendsContent = document.getElementById('friendsContent');
-                friendsContent.innerHTML = data.friends.map(friend => `<p>${friend}</p>`).join('');
+    menuToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('open');
+        mainContainer.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+        header.classList.toggle('expanded');
+    });
+
+    const userBtn = document.querySelector('#user-btn');
+    const editProfileText = document.querySelector('#edit-profile-text');
+    const profile = document.querySelector('#profile-section');
+
+    function toggleProfile() {
+        profile.classList.toggle('active');
+    }
+
+    userBtn.addEventListener('click', toggleProfile);
+    editProfileText.addEventListener('click', toggleProfile);
+
+    document.querySelector('#profile-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const actionUrl = this.getAttribute('action');
+
+        fetch(actionUrl, {
+            method: "POST",
+            body: formData
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
             } else {
-                console.error('Error loading friends:', data.message);
+                response.json().then(data => {
+                    if (data.errors) {
+                        if (data.errors.username) {
+                            document.getElementById('username').classList.add('error');
+                            document.getElementById('username-error').innerText = data.errors.username;
+                        }
+                        if (data.errors.email) {
+                            document.getElementById('email-address').classList.add('error');
+                            document.getElementById('email-error').innerText = data.errors.email;
+                        }
+                    }
+                });
             }
-        })
-        .catch(error => console.error('Error loading friends:', error));
-}
+        });
+    });
 
-function loadBadges() {
-    fetch('/api/badges')
-        .then(response => response.json())
-        .then(data => {
-            const badgesContent = document.getElementById('badgesContent');
-            badgesContent.innerHTML = data.map(item => `<p>${item.name}</p>`).join('');
-        })
-        .catch(error => console.error('Error loading badges:', error));
-}
+    const uploadPhotoBtn = document.getElementById('upload-photo-btn');
+    const uploadPhotoInput = document.getElementById('upload-photo');
+    const profilePicturePlaceholder = document.getElementById('profile-picture-placeholder');
 
-function setupSendFriendRequestButton() {
-    const sendRequestBtn = document.getElementById('send-request-btn');
-    sendRequestBtn.addEventListener('click', () => {
-        const friendUsername = document.getElementById('friend-username').value;
-        if (friendUsername) {
-            sendFriendRequest(friendUsername);
+    uploadPhotoBtn.addEventListener('click', function() {
+        uploadPhotoInput.click();
+    });
+
+    uploadPhotoInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePicturePlaceholder.innerHTML = `<img src="${e.target.result}" alt="Profile Picture">`;
+            };
+            reader.readAsDataURL(file);
         }
     });
-}
+});
 
-function sendFriendRequest(friendUsername) {
-    fetch('/send_friend_request', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ receiver_username: friendUsername }),
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert(data.message);
-            } else {
-                alert('Failed to send friend request. Please try again.');
-            }
-        })
-        .catch(error => {
-            console.error('Error sending friend request:', error);
-            alert('An error occurred while sending the friend request.');
-        });
-}
-
-function loadFriendRequests() {
-    fetch('/view_friend_requests')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const friendRequestsList = document.getElementById('friend-requests-list');
-                if (data.requests.length === 0) {
-                    friendRequestsList.innerHTML = '<li>No friend requests :(</li>';
-                } else {
-                    friendRequestsList.innerHTML = data.requests.map(request => `
-                        <li>
-                            <span>${request.sender_username}</span>
-                            <button onclick="acceptFriendRequest(${request.id})">Accept</button>
-                        </li>
-                    `).join('');
-                }
-            } else {
-                console.error('Error loading friend requests:', data.message);
-            }
-        })
-        .catch(error => console.error('Error loading friend requests:', error));
-}
-
-function acceptFriendRequest(requestId) {
-    fetch('/accept_friend_request', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ request_id: requestId }),
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert(data.message);
-                loadFriendRequests();
-                loadFriends();
-            } else {
-                alert('Failed to accept friend request. Please try again.');
-            }
-        })
-        .catch(error => {
-            console.error('Error accepting friend request:', error);
-            alert('An error occurred while accepting the friend request.');
-        });
-}

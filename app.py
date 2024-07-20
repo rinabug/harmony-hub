@@ -1,21 +1,24 @@
 from dotenv import load_dotenv
 import os
 import sqlite3
+import uuid
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.utils import secure_filename
 import hashlib
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
-from backend.user_auth import create_users_table, is_valid_email, is_valid_password, register_user, login_user
-from backend.profile_management import create_profiles_table, get_profile_db_connection, update_profile, get_profile
+from backend.user_auth import create_tables, get_db_connection, register_user, login_user, update_profile, get_profile, is_valid_email, is_valid_password
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
 from backend.recent_listens import get_recently_played_tracks
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
-DATABASE = 'users.db'
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload size
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 load_dotenv()
 
@@ -35,20 +38,14 @@ sp_oauth = SpotifyOAuth(
     show_dialog=True
 )
 
-def get_user_db_connection():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @app.before_request
 def initialize_database():
-    user_conn = get_user_db_connection()
-    create_users_table(user_conn)
-    user_conn.close()
-    
-    profile_conn = get_profile_db_connection()
-    create_profiles_table(profile_conn)
-    profile_conn.close()
+    create_tables()
 
 @app.route('/')
 def start_page():
@@ -81,8 +78,6 @@ def index():
         return redirect(url_for('login'))
 
     username = session['username']
-    profile_conn = get_profile_db_connection()
-    user_profile = get_profile(profile_conn, username)
 
     token_info = session.get('token_info', None)
     if not token_info:
@@ -110,7 +105,7 @@ def index():
         flash("There was an error connecting to Spotify. Please try logging in again.")
         return redirect(url_for('loginSpotify'))
 
-    return render_template('index.html', username=username, playlists_info=playlists_info, top_charts_info=top_charts_info, music_recommendations=music_recommendations, recently_played_tracks=recently_played_tracks, user_profile=user_profile)
+    return render_template('index.html', username=username, playlists_info=playlists_info, top_charts_info=top_charts_info, music_recommendations=music_recommendations, recently_played_tracks=recently_played_tracks)
 
 @app.route('/logout')
 def logout():
@@ -124,7 +119,7 @@ def signup():
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
-        conn = get_user_db_connection()
+        conn = get_db_connection()
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
@@ -139,8 +134,6 @@ def signup():
         else:
             success = register_user(conn, username, email, password)
             if success:
-                profile_conn = get_profile_db_connection()
-                update_profile(profile_conn, username, email, '', '')
                 session['username'] = username
                 flash('Registration successful. Please connect a music platform.', 'success')
                 return redirect(url_for('connect'))
@@ -153,7 +146,7 @@ def login():
     if request.method == 'POST':
         identifier = request.form.get('identifier')
         password = request.form.get('password')
-        conn = get_user_db_connection()
+        conn = get_db_connection()
         user = login_user(conn, identifier, password)
         if user:
             session['username'] = user['username']
@@ -210,13 +203,61 @@ def discover():
 
     return render_template('discover.html')
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if 'username' not in session:
         flash("Please log in to access this page.")
         return redirect(url_for('login'))
 
+    profile_conn = get_db_connection()
     username = session['username']
+    user_profile = get_profile(profile_conn, username)
+    
+    if request.method == 'POST':
+        new_username = request.form['username']
+        email_address = request.form['email_address']
+        bio = request.form['bio']
+        current_password = request.form['current_password']
+        profile_picture = user_profile['profile_picture']
+
+        user_conn = get_db_connection()
+        user = login_user(user_conn, username, current_password)
+        
+        errors = {}
+
+        if user:
+            if new_username != username:
+                cursor = user_conn.cursor()
+                cursor.execute("SELECT * FROM users WHERE username = ?", (new_username,))
+                if cursor.fetchone():
+                    errors['username'] = 'Username already exists.'
+            
+            if email_address != user_profile['email']:
+                cursor = user_conn.cursor()
+                cursor.execute("SELECT * FROM users WHERE email = ?", (email_address,))
+                if cursor.fetchone():
+                    errors['email'] = 'Email already exists.'
+
+            if errors:
+                return jsonify({'errors': errors}), 400
+
+            if 'profile_picture' in request.files:
+                file = request.files['profile_picture']
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    unique_filename = str(uuid.uuid4()) + "_" + filename
+                    file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                    file.save(file_path)
+                    profile_picture = file_path
+
+            update_profile(profile_conn, new_username, email_address, bio, profile_picture)
+            flash('Profile updated successfully', 'success')
+
+            session['username'] = new_username
+        else:
+            flash('Incorrect password. Please try again.', 'danger')
+
+        return redirect(url_for('profile'))
     
     token_info = session.get('token_info', None)
     if not token_info:
@@ -244,7 +285,8 @@ def profile():
         flash("There was an error connecting to Spotify. Please try logging in again.")
         return redirect(url_for('loginSpotify'))
 
-    return render_template('profile.html', username=username, favorite_music=favorite_music)
+    return render_template('profile.html', username=username, favorite_music=favorite_music, user_profile=user_profile)
+
 
 @app.route('/collab')
 def collab():
