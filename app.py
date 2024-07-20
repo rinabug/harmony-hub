@@ -8,7 +8,7 @@ import hashlib
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
-from backend.user_auth import create_tables, get_db_connection, register_user, login_user, update_profile, get_profile, is_valid_email, is_valid_password
+from backend.user_auth import create_tables, get_db_connection, register_user, login_user, update_profile, get_profile, is_valid_email, is_valid_password, set_reset_token, get_user_by_reset_token, reset_password
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
 from backend.recent_listens import get_recently_played_tracks
@@ -160,6 +160,51 @@ def login():
             else:
                 flash('Username or email does not exist. Maybe you should sign up instead.', 'danger')
     return render_template('login.html')
+
+# New routes for password reset functionality
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+        user = cursor.fetchone()
+        if user:
+            reset_token = str(uuid.uuid4())
+            set_reset_token(conn, email, reset_token)
+            send_reset_email(email, reset_token)
+            flash('A password reset link has been sent to your email.', 'success')
+        else:
+            flash('Email not found.', 'danger')
+    return render_template('forgot_password.html')
+
+def send_reset_email(email, token):
+    reset_url = url_for('reset_password_route', token=token, _external=True)
+    # Replace with your email sending code
+    print(f"Send this link to {email}: {reset_url}")
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'], endpoint='reset_password_route')
+def reset_password_route(token):
+    conn = get_db_connection()
+    user = get_user_by_reset_token(conn, token)
+    if not user:
+        flash('Invalid or expired token.', 'danger')
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        if new_password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+        elif not is_valid_password(new_password):
+            flash('Password must be at least 8 characters long and contain at least one special character.', 'danger')
+        else:
+            reset_password(conn, token, new_password)
+            flash('Your password has been reset successfully.', 'success')
+            return redirect(url_for('login'))
+    return render_template('reset_password.html', token=token)
+
 
 @app.route('/connect', methods=['GET', 'POST'])
 def connect():

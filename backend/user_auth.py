@@ -15,7 +15,8 @@ def create_tables():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL
+        password TEXT NOT NULL,
+        reset_token TEXT
     );
 
     CREATE TABLE IF NOT EXISTS profiles (
@@ -76,3 +77,18 @@ def get_profile(conn, username):
     cursor.execute('SELECT * FROM profiles WHERE username = ?', (username,))
     return cursor.fetchone()
 
+def set_reset_token(conn, email, token):
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET reset_token = ? WHERE email = ?", (token, email))
+    conn.commit()
+
+def get_user_by_reset_token(conn, token):
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE reset_token = ?", (token,))
+    return cursor.fetchone()
+
+def reset_password(conn, token, new_password):
+    cursor = conn.cursor()
+    hashed_password = hash_password(new_password)
+    cursor.execute("UPDATE users SET password = ?, reset_token = NULL WHERE reset_token = ?", (hashed_password, token))
+    conn.commit()
