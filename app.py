@@ -12,6 +12,7 @@ from backend.user_auth import create_tables, get_db_connection, register_user, l
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
 from backend.recent_listens import get_recently_played_tracks
+from backend.friend_system import view_friends, view_friend_requests, accept_friend_request, send_friend_request, create_friend_tables
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
@@ -344,6 +345,135 @@ def profile():
 
     return render_template('profile.html', username=username, favorite_music=favorite_music, user_profile=user_profile, recently_played_tracks=recently_played_tracks)
 
+@app.route('/user/<username>')
+def view_user_profile(username):
+    conn = get_db_connection()
+    user_profile = get_profile(conn, username)
+    conn.close()
+
+    if user_profile:
+        return render_template('view_profile.html', user_profile=user_profile)
+    else:
+        flash('User not found.', 'danger')
+        return redirect(url_for('find_friend'))
+
+@app.route('/find_friend')
+def find_friend():
+    if 'username' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
+    username = session['username']
+    conn = get_db_connection()
+    friends = view_friends(conn, username)
+    friend_requests = view_friend_requests(conn, username)
+    conn.close()
+
+    return render_template('find_friend.html', username=username, friends=friends, friend_requests=friend_requests)
+
+
+@app.route('/view_friends')
+def view_friends_route():
+    if 'username' not in session:
+        return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
+    
+    conn = get_db_connection()
+    friends = view_friends(conn, session['username'])
+    conn.close()
+    
+    return jsonify({'status': 'success', 'friends': friends})
+
+@app.route('/search_friends', methods=['GET'])
+def search_friends():
+    query = request.args.get('q')
+    if not query:
+        return jsonify([])
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT username FROM users WHERE username LIKE ?", ('%' + query + '%',))
+    users = cursor.fetchall()
+    conn.close()
+
+    results = [{'username': user[0]} for user in users if user[0] != session.get('username')]
+    return jsonify(results)
+
+@app.route('/view_friend_requests')
+def view_friend_requests_route():
+    if 'username' not in session:
+        return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
+    
+    conn = get_db_connection()
+    friend_requests = view_friend_requests(conn, session['username'])
+    conn.close()
+    
+    return jsonify({'status': 'success', 'requests': friend_requests})
+
+@app.route('/accept_friend_request', methods=['POST'])
+def accept_friend_request_route():
+    if 'username' not in session:
+        return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
+    
+    data = request.get_json()
+    request_id = data.get('request_id')
+    
+    conn = get_db_connection()
+    accept_friend_request(conn, session['username'], request_id)
+    conn.close()
+    
+    return jsonify({'status': 'success', 'message': 'Friend request accepted'})
+
+@app.route('/send_request', methods=['POST'])
+def send_request():
+    if 'username' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json()
+    sender_username = session['username']
+    receiver_username = data.get('username')
+
+    conn = get_db_connection()
+    success = send_friend_request(conn, sender_username, receiver_username)
+    conn.close()
+
+    if success:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'error': 'Failed to send friend request'}), 400
+
+@app.route('/user_profile/<username>')
+def user_profile(username):
+    if 'username' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
+    profile_conn = get_db_connection()
+    user_profile = get_profile(profile_conn, username)
+    profile_conn.close()
+
+    if not user_profile:
+        flash('User not found.', 'danger')
+        return redirect(url_for('find_friend'))
+
+    # Fetch the user's top tracks from Spotify if connected
+    favorite_music = []
+    if user_profile.get('spotify_token'):
+        try:
+            sp = Spotify(auth=user_profile['spotify_token'])
+            top_tracks = sp.current_user_top_tracks(limit=10)
+            favorite_music = [
+                {
+                    'name': track['name'],
+                    'artist': track['artists'][0]['name'],
+                    'album_image': track['album']['images'][0]['url'],
+                    'spotify_url': track['external_urls']['spotify']
+                }
+                for track in top_tracks['items']
+            ]
+        except Exception as e:
+            print(f"Error fetching Spotify data: {e}")
+
+    return render_template('user_profile.html', user_profile=user_profile, favorite_music=favorite_music)
 
 
 @app.route('/collab')
@@ -354,23 +484,6 @@ def collab():
 def game():
     return render_template('game.html')
 
-@app.route('/find_friend')
-def find_friend():
-    return render_template('find_friend.html')
-
-#example data
-users = [
-    {'username': 'john_doe'},
-    {'username': 'jane_smith'},
-    {'username': 'alice_jones'},
-    {'username': 'bob_brown'}
-]
-
-@app.route('/search_friends', methods=['GET'])
-def search_friends():
-    query = request.args.get('q')
-    results = [user for user in users if query.lower() in user['username'].lower()]
-    return jsonify(results)
 
 def ensure_token_validity(token_info):
     """

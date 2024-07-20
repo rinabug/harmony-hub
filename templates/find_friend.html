@@ -46,11 +46,10 @@
                 <div class="bento-box-container">
                     <div class="bento-item small">
                         <h3>Friends</h3>
-                        <ul class="friends-list">
-                            <li><a href="#">@friend1</a></li>
-                            <li><a href="#">@friend2</a></li>
-                            <li><a href="#">@friend3</a></li>
-                            <!-- Add more friends as needed -->
+                        <ul id="friends-list" class="user-list">
+                            {% for friend in friends %}
+                                <li class="user-item"><a href="{{ url_for('view_user_profile', username=friend) }}">@{{ friend }}</a></li>
+                            {% endfor %}
                         </ul>
                     </div>
                     <div class="bento-item small">
@@ -74,7 +73,7 @@
                     <div class="bento-item large">
                         <h2>Search For Friends</h2>
                         <div id="searchFriendsContent">
-                            <form class="form-inline my-2 my-lg-0">
+                            <form class="form-inline my-2 my-lg-0" id="searchForm">
                                 <input class="form-control mr-sm-2 input-large" type="search" id="searchInput" placeholder="Enter username" aria-label="Search">
                             </form>
                             <div id="searchResults"></div>
@@ -82,14 +81,14 @@
                     </div>
                     <div class="bento-item small">
                         <h2>Friend Requests</h2>
-                        <ul id="friend-requests-list"></ul>
-                    </div>
-                    <div class="bento-item small">
-                    <div class="container">
-                        <h2>Send Friend Request</h2>
-                        <input type="text" id="friend-username" class="input-large" placeholder="Enter username">
-                        <button id="send-request-btn" class="button">Send Request</button>
-                    </div>
+                        <ul id="friend-requests-list" class="user-list">
+                            {% for request in friend_requests %}
+                                <li>
+                                    {{ request.sender_username }}
+                                    <button class="button add-friend-button" onclick="acceptFriendRequest({{ request.id }})">Accept</button>
+                                </li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 </div>
             </section>
@@ -112,7 +111,65 @@
                 header.classList.toggle('expanded');
             });
         });
+        // Update user items to include data-username attribute
+    function renderSearchResults(data) {
+        const searchResults = document.getElementById('searchResults');
+        searchResults.innerHTML = '';
+        data.forEach(user => {
+            const userItem = document.createElement('div');
+            userItem.classList.add('user-item');
+            userItem.setAttribute('data-username', user.username); // Add data-username attribute
+            userItem.innerHTML = `
+                <span>${user.username}</span>
+                <button class="add-friend-button" data-username="${user.username}">Add Friend</button>
+            `;
+            searchResults.appendChild(userItem);
+        });
+
+        document.querySelectorAll('.add-friend-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const username = event.target.dataset.username;
+                fetch(`/send_request`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                }).then(response => {
+                    if (response.ok) {
+                        alert('Friend request sent!');
+                        event.target.disabled = true;
+                        event.target.innerText = 'Request Sent';
+                    } else {
+                        response.json().then(data => {
+                            alert(data.error || 'Failed to send friend request.');
+                        });
+                    }
+                });
+            });
+        });
+    }
+    </script>
+    <script>
+        function acceptFriendRequest(requestId) {
+            fetch(`/accept_friend_request`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ request_id: requestId })
+            }).then(response => {
+                if (response.ok) {
+                    alert('Friend request accepted!');
+                    location.reload();
+                } else {
+                    alert('Failed to accept friend request.');
+                }
+            });
+        }
     </script>
 </body>
 </html>
+
 

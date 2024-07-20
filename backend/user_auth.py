@@ -27,9 +27,27 @@ def create_tables():
         profile_picture TEXT,
         FOREIGN KEY (user_id) REFERENCES users(id)
     );
+
+    CREATE TABLE IF NOT EXISTS friend_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sender_username TEXT,
+        receiver_username TEXT,
+        status TEXT,
+        FOREIGN KEY (sender_username) REFERENCES users (username),
+        FOREIGN KEY (receiver_username) REFERENCES users (username)
+    );
+
+    CREATE TABLE IF NOT EXISTS friends (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user1_username TEXT,
+        user2_username TEXT,
+        FOREIGN KEY (user1_username) REFERENCES users (username),
+        FOREIGN KEY (user2_username) REFERENCES users (username)
+    );
     ''')
     conn.commit()
     conn.close()
+
 
 def is_valid_email(email):
     email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
