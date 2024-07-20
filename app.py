@@ -2,13 +2,13 @@ from dotenv import load_dotenv
 import os
 import sqlite3
 import uuid
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, json
 from werkzeug.utils import secure_filename
 import hashlib
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
-from backend.user_auth import create_tables, get_db_connection, register_user, login_user, update_profile, get_profile, is_valid_email, is_valid_password, set_reset_token, get_user_by_reset_token, reset_password
+from backend.user_auth import create_tables, get_db_connection, register_user, login_user, update_profile, get_profile, is_valid_email, is_valid_password, set_reset_token, get_user_by_reset_token, reset_password, alter_profiles_table
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
 from backend.recent_listens import get_recently_played_tracks
@@ -47,6 +47,7 @@ def allowed_file(filename):
 @app.before_request
 def initialize_database():
     create_tables()
+    alter_profiles_table()
 
 @app.route('/')
 def start_page():
@@ -66,11 +67,26 @@ def callback():
     if 'username' not in session:
         flash("Please log in to your account first.")
         return redirect(url_for('login'))
-    
+
     token_info = sp_oauth.get_access_token(request.args['code'], as_dict=True)
     session['token_info'] = token_info
     flash('Spotify account connected successfully.', 'success')
+
+    sp = Spotify(auth=token_info['access_token'])
+    favorite_music, recently_played_tracks = fetch_spotify_data(sp)
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE profiles
+        SET favorite_music = ?, recently_played_tracks = ?
+        WHERE username = ?
+    ''', (json.dumps(favorite_music), json.dumps(recently_played_tracks), session['username']))
+    conn.commit()
+    conn.close()
+
     return redirect(url_for('index'))
+
 
 @app.route('/index')
 def index():
@@ -255,9 +271,12 @@ def profile():
         flash("Please log in to access this page.")
         return redirect(url_for('login'))
 
-    conn = get_db_connection()
+    profile_conn = get_db_connection()
     username = session['username']
-    user_profile = get_profile(conn, username)
+    user_profile = get_profile(profile_conn, username)
+
+    favorite_music = json.loads(user_profile['favorite_music']) if user_profile['favorite_music'] else []
+    recently_played_tracks = json.loads(user_profile['recently_played_tracks']) if user_profile['recently_played_tracks'] else []
     
     if request.method == 'POST':
         new_username = request.form['username']
@@ -266,19 +285,20 @@ def profile():
         current_password = request.form['current_password']
         profile_picture = user_profile['profile_picture']
 
-        user = login_user(conn, username, current_password)
+        user_conn = get_db_connection()
+        user = login_user(user_conn, username, current_password)
         
         errors = {}
 
         if user:
+            cursor = user_conn.cursor()
+
             if new_username != username:
-                cursor = conn.cursor()
                 cursor.execute("SELECT * FROM users WHERE username = ?", (new_username,))
                 if cursor.fetchone():
                     errors['username'] = 'Username already exists.'
             
             if email_address != user_profile['email']:
-                cursor = conn.cursor()
                 cursor.execute("SELECT * FROM users WHERE email = ?", (email_address,))
                 if cursor.fetchone():
                     errors['email'] = 'Email already exists.'
@@ -295,22 +315,25 @@ def profile():
                     file.save(file_path)
                     profile_picture = file_path
 
-            cursor = conn.cursor()
             cursor.execute('''
             UPDATE users
             SET username = ?, email = ?
             WHERE id = ?
             ''', (new_username, email_address, user['id']))
+
             cursor.execute('''
             UPDATE profiles
             SET username = ?, email = ?, bio = ?, profile_picture = ?
             WHERE user_id = ?
             ''', (new_username, email_address, bio, profile_picture, user['id']))
-            conn.commit()
 
-            flash('Profile updated successfully', 'success')
+            user_conn.commit()
+            user_conn.close()
+
             session['username'] = new_username
+            flash('Profile updated successfully', 'success')
         else:
+            user_conn.close()
             flash('Incorrect password. Please try again.', 'danger')
 
         return redirect(url_for('profile'))
@@ -343,7 +366,17 @@ def profile():
         flash("There was an error connecting to Spotify. Please try logging in again.")
         return redirect(url_for('loginSpotify'))
 
+    cursor = profile_conn.cursor()
+    cursor.execute('''
+        UPDATE profiles
+        SET favorite_music = ?, recently_played_tracks = ?
+        WHERE username = ?
+    ''', (json.dumps(favorite_music), json.dumps(recently_played_tracks), session['username']))
+    profile_conn.commit()
+    profile_conn.close()
+
     return render_template('profile.html', username=username, favorite_music=favorite_music, user_profile=user_profile, recently_played_tracks=recently_played_tracks)
+
 
 @app.route('/user/<username>')
 def view_user_profile(username):
@@ -441,39 +474,33 @@ def send_request():
     else:
         return jsonify({'error': 'Failed to send friend request'}), 400
 
-@app.route('/user_profile/<username>')
+@app.route('/user/<username>')
 def user_profile(username):
     if 'username' not in session:
         flash("Please log in to access this page.")
         return redirect(url_for('login'))
 
-    profile_conn = get_db_connection()
-    user_profile = get_profile(profile_conn, username)
-    profile_conn.close()
-
+    conn = get_db_connection()
+    user_profile = get_profile(conn, username)
+    
     if not user_profile:
-        flash('User not found.', 'danger')
+        flash("User not found.")
         return redirect(url_for('find_friend'))
+    
+    favorite_music = json.loads(user_profile['favorite_music']) if user_profile['favorite_music'] else []
+    recently_played_tracks = json.loads(user_profile['recently_played_tracks']) if user_profile['recently_played_tracks'] else []
 
-    # Fetch the user's top tracks from Spotify if connected
-    favorite_music = []
-    if user_profile.get('spotify_token'):
-        try:
-            sp = Spotify(auth=user_profile['spotify_token'])
-            top_tracks = sp.current_user_top_tracks(limit=10)
-            favorite_music = [
-                {
-                    'name': track['name'],
-                    'artist': track['artists'][0]['name'],
-                    'album_image': track['album']['images'][0]['url'],
-                    'spotify_url': track['external_urls']['spotify']
-                }
-                for track in top_tracks['items']
-            ]
-        except Exception as e:
-            print(f"Error fetching Spotify data: {e}")
+    # Placeholder for badges and recent activities
+    badges = []  # You should replace this with actual badge data from your database
+    recent_activity = []  # You should replace this with actual recent activity data from your database
 
-    return render_template('user_profile.html', user_profile=user_profile, favorite_music=favorite_music)
+    return render_template('user_profile.html', 
+                           user_profile=user_profile, 
+                           favorite_music=favorite_music, 
+                           favorite_movies=[],  # Add actual favorite movies if available
+                           recent_activity=recent_activity,
+                           badges=badges)
+
 
 
 @app.route('/collab')
@@ -494,6 +521,38 @@ def ensure_token_validity(token_info):
         session['token_info'] = token_info
     return token_info
 
+def fetch_spotify_data(sp):
+    favorite_music = []
+    recently_played_tracks = []
+
+    try:
+        top_tracks = sp.current_user_top_tracks(limit=10)
+        favorite_music = [
+            {
+                'name': track['name'],
+                'artist': track['artists'][0]['name'],
+                'album_image': track['album']['images'][0]['url'],
+                'spotify_url': track['external_urls']['spotify']
+            }
+            for track in top_tracks['items']
+        ]
+
+        recent_tracks = sp.current_user_recently_played(limit=10)
+        recently_played_tracks = [
+            {
+                'name': track['track']['name'],
+                'artist': track['track']['artists'][0]['name'],
+                'album': track['track']['album']['name'],
+                'album_image_url': track['track']['album']['images'][0]['url'],
+                'preview_url': track['track']['preview_url'],
+                'external_url': track['track']['external_urls']['spotify']
+            }
+            for track in recent_tracks['items']
+        ]
+    except Exception as e:
+        print(f"Error fetching Spotify data: {e}")
+
+    return favorite_music, recently_played_tracks
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)

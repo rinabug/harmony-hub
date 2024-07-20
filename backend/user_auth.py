@@ -25,6 +25,8 @@ def create_tables():
         email TEXT NOT NULL,
         bio TEXT,
         profile_picture TEXT,
+        favorite_music TEXT,
+        recently_played_tracks TEXT,
         FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
@@ -45,6 +47,20 @@ def create_tables():
         FOREIGN KEY (user2_username) REFERENCES users (username)
     );
     ''')
+    conn.commit()
+    conn.close()
+
+def alter_profiles_table():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(profiles)")
+    columns = [column['name'] for column in cursor.fetchall()]
+
+    if 'favorite_music' not in columns:
+        cursor.execute("ALTER TABLE profiles ADD COLUMN favorite_music TEXT")
+    if 'recently_played_tracks' not in columns:
+        cursor.execute("ALTER TABLE profiles ADD COLUMN recently_played_tracks TEXT")
+    
     conn.commit()
     conn.close()
 
