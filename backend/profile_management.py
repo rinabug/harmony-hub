@@ -8,7 +8,9 @@ def create_profiles_table(conn):
         username TEXT UNIQUE NOT NULL,
         email TEXT NOT NULL,
         bio TEXT,
-        profile_picture TEXT
+        profile_picture TEXT,
+        favorite_music TEXT,
+        recently_played_tracks TEXT
     )
     ''')
     conn.commit()

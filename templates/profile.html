@@ -299,7 +299,7 @@
                 <div class="bento-box-container">
                     <div class="bento-item small">
                         <div class="info-section">
-                            <img src="{{ user_profile['profile_picture'] }}" alt="Profile Picture" class="profile-picture">
+                            <img src="{{ url_for('static', filename='uploads/' ~ user_profile['profile_picture']) }}" alt="Profile Picture" class="profile-picture">
                             <div class="profile-details">
                                 <h2>{{ user_profile['username'] }}</h2>
                                 <p class="bio">{{ user_profile['bio'] }}</p>
@@ -384,16 +384,16 @@
                             <!--Reviewing movie content-->
                         </div>
                     </div>
-                        <div class="profile" id="profile-section">
-                            <h2>Edit Your Profile</h2>
-                            <div class="profile-container">
-                                <div class="profile-picture-placeholder" id="profile-picture-placeholder">
-                                    {% if user_profile['profile_picture'] %}
-                                        <img src="{{ user_profile['profile_picture'] }}" alt="Profile Picture">
-                                    {% else %}
-                                        <i class="fas fa-user-circle"></i>
-                                    {% endif %}
-                                </div>
+                    <div class="profile" id="profile-section">
+                        <h2>Edit Your Profile</h2>
+                        <div class="profile-container">
+                            <div class="profile-picture-placeholder" id="profile-picture-placeholder">
+                                {% if user_profile['profile_picture'] %}
+                                    <img src="{{ url_for('static', filename='uploads/' ~ user_profile['profile_picture']) }}" alt="Profile Picture">
+                                {% else %}
+                                    <i class="fas fa-user-circle"></i>
+                                {% endif %}
+                            </div>                    
                                 <form id="profile-form" method="post" action="{{ url_for('profile') }}" enctype="multipart/form-data">
                                     <input type="file" id="upload-photo" name="profile_picture" style="display: none;">
                                     <button type="button" id="upload-photo-btn">Upload your photo</button>

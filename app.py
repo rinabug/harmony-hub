@@ -12,7 +12,7 @@ from backend.user_auth import create_tables, get_db_connection, register_user, l
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
 from backend.recent_listens import get_recently_played_tracks
-from backend.friend_system import view_friends, view_friend_requests, accept_friend_request, send_friend_request, create_friend_tables
+from backend.friend_system import view_friends, view_friend_requests, accept_friend_request, send_friend_request, create_friend_tables, alter_friends_table, initialize_friend_system
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
@@ -46,8 +46,11 @@ def allowed_file(filename):
 
 @app.before_request
 def initialize_database():
+    conn = get_db_connection()
     create_tables()
     alter_profiles_table()
+    initialize_friend_system(conn)
+    conn.close()
 
 @app.route('/')
 def start_page():
@@ -313,7 +316,7 @@ def profile():
                     unique_filename = str(uuid.uuid4()) + "_" + filename
                     file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
                     file.save(file_path)
-                    profile_picture = file_path
+                    profile_picture = unique_filename
 
             cursor.execute('''
             UPDATE users
@@ -380,15 +383,33 @@ def profile():
 
 @app.route('/user/<username>')
 def view_user_profile(username):
+    if 'username' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
     conn = get_db_connection()
     user_profile = get_profile(conn, username)
     conn.close()
 
     if user_profile:
-        return render_template('view_profile.html', user_profile=user_profile)
+        favorite_music = json.loads(user_profile['favorite_music']) if user_profile['favorite_music'] else []
+        recently_played_tracks = json.loads(user_profile['recently_played_tracks']) if user_profile['recently_played_tracks'] else []
+
+        # Placeholder for badges and recent activities
+        badges = []  # You should replace this with actual badge data from your database
+        recent_activity = []  # You should replace this with actual recent activity data from your database
+
+        return render_template('user_profile.html',
+                               user_profile=user_profile,
+                               favorite_music=favorite_music,
+                               recently_played_tracks=recently_played_tracks,
+                               favorite_movies=[],  # Add actual favorite movies if available
+                               recent_activity=recent_activity,
+                               badges=badges)
     else:
         flash('User not found.', 'danger')
         return redirect(url_for('find_friend'))
+
 
 @app.route('/find_friend')
 def find_friend():

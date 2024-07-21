@@ -22,6 +22,20 @@ def create_friend_tables(conn):
     ''')
     conn.commit()
 
+def alter_friends_table(conn):
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(friends)")
+    columns = [column['name'] for column in cursor.fetchall()]
+
+    if 'status' not in columns:
+        cursor.execute("ALTER TABLE friends ADD COLUMN status TEXT")
+    
+    conn.commit()
+
+def initialize_friend_system(conn):
+    create_friend_tables(conn)
+    alter_friends_table(conn)
+
 def send_friend_request(conn, sender_username, receiver_username):
     cursor = conn.cursor()
     cursor.execute("SELECT username FROM users WHERE username = ?", (receiver_username,))
@@ -35,7 +49,6 @@ def send_friend_request(conn, sender_username, receiver_username):
     
     conn.commit()
     return True
-
 
 def view_friend_requests(conn, username):
     cursor = conn.cursor()

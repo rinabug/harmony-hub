@@ -26,8 +26,8 @@ body {
     flex: 1;
     transition: margin-left 0.3s ease, padding-left 0.3s ease;
     overflow-y: auto; /* Allow the main container to be scrollable */
-    padding: 100px;
-    margin-top: 300px;
+    padding: 100px 20px 20px 20px;
+    margin-top: 200px;
 }
 
 #main-container.collapsed {
@@ -121,15 +121,13 @@ body {
 /* Main Content */
 .main-content {
     flex: 1;
-    margin-left: 0;
     transition: margin-left 0.3s ease;
-    padding: 40px;
-    padding-top: 20px; /* Adjust for header height */
-    overflow-y: auto; /* Allow the main content area to be scrollable */
+    padding: 20px;
+    overflow-y: auto;
 }
 
 .main-content.expanded {
-    margin-left: 250px; /* Match the sidebar width */
+    margin-left: 250px;
 }
 
 /* Header */
