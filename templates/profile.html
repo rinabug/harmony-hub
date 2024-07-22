@@ -338,12 +338,16 @@
                     <div class="bento-item medium">
                         <h2>Favorite Movies/Shows</h2>
                         <div id="favoriteMoviesContent">
-                            <!-- Favorite movies/shows content will be loaded dynamically -->
                             <ul>
                                 {% for item in favorite_movies %}
-                                    <li>{{ item }}</li>
+                                    <li>{{ item.title }}</li>
                                 {% endfor %}
                             </ul>
+                            <form method="POST" action="{{ url_for('add_favorite_movie') }}">
+                                <label for="movie_title">Movie/Show Title:</label>
+                                <input type="text" id="movie_title" name="title" required>
+                                <button type="submit">Add to Favorites</button>
+                            </form>
                         </div>
                     </div>
                     <div class="bento-item small">
@@ -374,16 +378,35 @@
                     </div>
                     <div class="bento-item small">
                         <h2>Recently Watched</h2>
-                        <div id="recentActivityContent">
-                            <!-- Recent activity content will be loaded dynamically -->
+                        <div id="recentlyWatchedContent">
+                            <ul>
+                                {% for item in recently_watched %}
+                                    <li>{{ item.title }}</li>
+                                {% endfor %}
+                            </ul>
+                            <form method="POST" action="{{ url_for('add_recently_watched') }}">
+                                <label for="watched_title">Movie/Show Title:</label>
+                                <input type="text" id="watched_title" name="title" required>
+                                <button type="submit">Add to Recently Watched</button>
+                            </form>
                         </div>
                     </div>
                     <div class="bento-item small">
                         <h2>Reviews</h2>
                         <div id="reviewContent">
-                            <!--Reviewing movie content-->
+                            <ul>
+                                {% for review in reviews %}
+                                    <li>{{ review.title }} - {{ review.review_text }}</li>
+                                {% endfor %}
+                            </ul>
+                            <form method="POST" action="{{ url_for('add_review') }}">
+                                <label for="review_title">Movie/Show Title:</label>
+                                <input type="text" id="review_title" name="title" required>
+                                <label for="review_text">Your Review:</label>
+                                <textarea id="review_text" name="review_text" required></textarea>
+                                <button type="submit">Submit Review</button>
+                            </form>
                         </div>
-                    </div>
                     <div class="profile" id="profile-section">
                         <h2>Edit Your Profile</h2>
                         <div class="profile-container">

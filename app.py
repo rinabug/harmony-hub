@@ -541,6 +541,105 @@ def user_profile(username):
                            recent_activity=recent_activity,
                            badges=badges)
 
+@app.route('/add_favorite_movie', methods=['POST'])
+def add_favorite_movie():
+    if 'username' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
+    title = request.form['title']
+    username = session['username']
+
+    profile_conn = get_db_connection()
+    cursor = profile_conn.cursor()
+
+    cursor.execute('''
+    SELECT favorite_movies FROM profiles WHERE username = ?
+    ''', (username,))
+    favorite_movies = cursor.fetchone()[0]
+    favorite_movies = json.loads(favorite_movies) if favorite_movies else []
+
+    favorite_movies.append({'title': title})
+
+    cursor.execute('''
+    UPDATE profiles
+    SET favorite_movies = ?
+    WHERE username = ?
+    ''', (json.dumps(favorite_movies), username))
+
+    profile_conn.commit()
+    profile_conn.close()
+
+    flash('Favorite movie/show added successfully', 'success')
+    return redirect(url_for('profile'))
+
+
+@app.route('/add_recently_watched', methods=['POST'])
+def add_recently_watched():
+    if 'username' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
+    title = request.form['title']
+    username = session['username']
+
+    profile_conn = get_db_connection()
+    cursor = profile_conn.cursor()
+
+    cursor.execute('''
+    SELECT recently_watched FROM profiles WHERE username = ?
+    ''', (username,))
+    recently_watched = cursor.fetchone()[0]
+    recently_watched = json.loads(recently_watched) if recently_watched else []
+
+    recently_watched.append({'title': title})
+
+    cursor.execute('''
+    UPDATE profiles
+    SET recently_watched = ?
+    WHERE username = ?
+    ''', (json.dumps(recently_watched), username))
+
+    profile_conn.commit()
+    profile_conn.close()
+
+    flash('Recently watched movie/show added successfully', 'success')
+    return redirect(url_for('profile'))
+
+
+@app.route('/add_review', methods=['POST'])
+def add_review():
+    if 'username' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
+    title = request.form['title']
+    review_text = request.form['review_text']
+    username = session['username']
+
+    profile_conn = get_db_connection()
+    cursor = profile_conn.cursor()
+
+    cursor.execute('''
+    SELECT reviews FROM profiles WHERE username = ?
+    ''', (username,))
+    reviews = cursor.fetchone()[0]
+    reviews = json.loads(reviews) if reviews else []
+
+    reviews.append({'title': title, 'review_text': review_text})
+
+    cursor.execute('''
+    UPDATE profiles
+    SET reviews = ?
+    WHERE username = ?
+    ''', (json.dumps(reviews), username))
+
+    profile_conn.commit()
+    profile_conn.close()
+
+    flash('Review added successfully', 'success')
+    return redirect(url_for('profile'))
+
 
 
 @app.route('/collab')
