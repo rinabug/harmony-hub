@@ -10,16 +10,16 @@ from backend.user_auth import create_users_table, is_valid_email, is_valid_passw
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
 from backend.recent_listens import get_recently_played_tracks
-
+load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
 DATABASE = 'users.db'
 
-load_dotenv()
 
 client_id = os.getenv('SPOTIFY_CLIENT_ID')
 client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
 redirect_uri = 'http://localhost:8080/callback'
+
 scope = 'playlist-read-private,user-follow-read,user-top-read,user-read-recently-played'
 
 cache_handler = FlaskSessionCacheHandler(session)
@@ -41,15 +41,47 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 
 mail = Mail(app)
-
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
     return conn
+def setup_database():
+    conn = get_db_connection()
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            message TEXT,
+            is_read BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.close()
 
 @app.before_request
 def initialize_database():
+    setup_database()
     conn = get_db_connection()
     create_users_table(conn)
+    conn.close()
+
+
+# Add this function to insert notifications into the database
+def add_notification(user_id, message):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND message = ? AND is_read = 0",
+        (user_id, message)
+    )
+    count = cursor.fetchone()[0]
+
+    if count == 0:
+        cursor.execute(
+            "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+            (user_id, message)
+        )
+        conn.commit()
     conn.close()
 
 @app.route('/')
@@ -70,11 +102,12 @@ def callback():
     if 'username' not in session:
         flash("Please log in to your account first.")
         return redirect(url_for('login'))
-    
+
     token_info = sp_oauth.get_access_token(request.args['code'], as_dict=True)
     session['token_info'] = token_info
     flash('Spotify account connected successfully.', 'success')
     return redirect(url_for('index'))
+
 
 @app.route('/index')
 def index():
@@ -141,8 +174,8 @@ def signup():
             if success:
                 session['username'] = username
                 flash('Registration successful. Please connect a music platform.', 'success')
-                # added these for the email notification
-                              # Send welcome email
+
+                # Send welcome email
                 msg = Message("Welcome to MusicBuddyApp!",
                               recipients=[email])
                 msg.body = f"""
@@ -162,7 +195,7 @@ def signup():
                 The MusicBuddyApp Team
                 """
                 mail.send(msg)
-                # ends here 
+
                 return redirect(url_for('connect'))
             else:
                 flash('An error occurred during registration. Please try again.', 'danger')
@@ -177,6 +210,8 @@ def login():
         user = login_user(conn, identifier, password)
         if user:
             session['username'] = user[1]
+            # Add this line to create a login notification
+            add_notification(user[0], f"Welcome back, {user[1]}!")
             flash('Login successful. Please connect a music platform.', 'success')
             return redirect(url_for('connect'))
         else:
@@ -260,6 +295,24 @@ def search_friends():
     results = [user for user in users if query.lower() in user['username'].lower()]
     return jsonify(results)
 
+# for the notification
+@app.route('/api/notifications')
+def get_notifications():
+    if 'username' not in session:
+        return jsonify([])
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT message, created_at FROM notifications WHERE user_id = (SELECT id FROM users WHERE username = ?) AND is_read = 0",
+        (session['username'],)
+    )
+    notifications = cursor.fetchall()
+    conn.close()
+
+    return jsonify([{"message": row["message"], "created_at": row["created_at"]} for row in notifications])
+
+
 def ensure_token_validity(token_info):
     """
     Ensure the Spotify token is valid, refreshing it if necessary.
@@ -268,6 +321,25 @@ def ensure_token_validity(token_info):
         token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
         session['token_info'] = token_info
     return token_info
+@app.route('/api/notifications/mark_read', methods=['POST'])
+@app.route('/mark_notification_read', methods=['POST'])
+def mark_notification_read():
+    if 'username' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    notification_id = request.json.get('notification_id')
+    if not notification_id:
+        return jsonify({"error": "Bad Request"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = (SELECT id FROM users WHERE username = ?)",
+        (notification_id, session['username'])
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
 
 
 if __name__ == '__main__':
