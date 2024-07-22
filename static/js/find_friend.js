@@ -11,9 +11,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const sendMessageBtn = document.getElementById('sendMessageBtn');
     const backToFriendsBtn = document.getElementById('backToFriendsBtn');
     const currentChatFriend = document.getElementById('currentChatFriend');
-
+    
     let socket;
     let currentFriend;
+    let currentUsername;
+    let userId;
+
+    function setCurrentUserData(username, id) {
+        currentUsername = username;
+        userId = id;
+    }
 
     menuToggle.addEventListener('click', function() {
         sidebar.classList.toggle('open');
@@ -26,14 +33,13 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('/get_friends')
             .then(response => response.json())
             .then(data => {
-                const friendsList = document.getElementById('friends-list');
                 friendsList.innerHTML = '';
                 data.friends.forEach(friend => {
                     const li = document.createElement('li');
                     li.textContent = friend.username;
+                    li.addEventListener('click', () => startChat(friend));
                     friendsList.appendChild(li);
                 });
-                updateFriendsForMessaging(data.friends);
             });
     }
 
@@ -48,25 +54,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function startChat(friend) {
+        console.log('Starting chat with friend:', friend);
         currentFriend = friend;
         currentChatFriend.textContent = friend.username;
         chatWindow.style.display = 'block';
         document.getElementById('friendsList').style.display = 'none';
+        
         loadMessages(friend.id);
         joinChatRoom(friend.id);
+        
+        messageInput.value = '';
+        messageInput.focus();
     }
 
     function loadMessages(friendId) {
+        console.log('Loading messages for friend ID:', friendId);
         fetch(`/get_messages/${friendId}`)
             .then(response => response.json())
             .then(data => {
+                console.log('Received messages:', data);
                 messagesList.innerHTML = '';
-                data.messages.forEach(message => {
-                    const messageEl = document.createElement('div');
-                    messageEl.textContent = `${message[1] === friendId ? currentFriend.username : 'You'}: ${message[3]}`;
-                    messagesList.appendChild(messageEl);
-                });
-                messagesList.scrollTop = messagesList.scrollHeight;
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(message => {
+                        console.log('Processing message:', message);
+                        const sender = message[1] === parseInt(userId) ? currentUsername : currentFriend.username;
+                        appendMessage(sender, message[3], new Date(message[4]));
+                    });
+                    scrollToBottom();
+                } else {
+                    console.log('No messages found');
+                    messagesList.innerHTML = '<p>No messages yet.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading messages:', error);
+                messagesList.innerHTML = '<p>Error loading messages.</p>';
             });
     }
 
@@ -75,26 +97,61 @@ document.addEventListener('DOMContentLoaded', function() {
             socket.disconnect();
         }
         socket = io();
-        const room = `${Math.min(friendId, userId)}_${Math.max(friendId, userId)}`;
+        const room = `${Math.min(userId, friendId)}_${Math.max(userId, friendId)}`;
+        console.log('Joining room:', room);
         socket.emit('join', {username: currentUsername, room: room});
 
         socket.on('new_message', function(data) {
-            const messageEl = document.createElement('div');
-            messageEl.textContent = `${data.sender === currentUsername ? 'You' : currentFriend.username}: ${data.content}`;
-            messagesList.appendChild(messageEl);
-            messagesList.scrollTop = messagesList.scrollHeight;
+            console.log('Received new message:', data);
+            appendMessage(data.sender, data.content, new Date(data.timestamp));
+            scrollToBottom();
+        });
+
+        socket.on('user_joined', function(data) {
+            console.log('User joined:', data);
+        });
+
+        socket.on('user_left', function(data) {
+            console.log('User left:', data);
         });
     }
 
-    sendMessageBtn.addEventListener('click', function() {
-        const message = messageInput.value.trim();
-        if (message) {
-            socket.emit('send_message', {
-                sender: currentUsername,
-                receiver: currentFriend.username,
-                message: message
-            });
-            messageInput.value = '';
+    function appendMessage(sender, content, timestamp) {
+        const messageEl = document.createElement('div');
+        messageEl.classList.add('message', sender === currentUsername ? 'sent' : 'received');
+        
+        const senderEl = document.createElement('span');
+        senderEl.classList.add('sender');
+        senderEl.textContent = sender + ': ';
+        
+        const contentEl = document.createElement('span');
+        contentEl.classList.add('content');
+        contentEl.textContent = content;
+        
+        const timeEl = document.createElement('span');
+        timeEl.classList.add('timestamp');
+        timeEl.textContent = formatTimestamp(timestamp);
+        
+        messageEl.appendChild(senderEl);
+        messageEl.appendChild(contentEl);
+        messageEl.appendChild(timeEl);
+        
+        messagesList.appendChild(messageEl);
+    }
+    window.setCurrentUserData = setCurrentUserData;
+
+    function formatTimestamp(date) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function scrollToBottom() {
+        messagesList.scrollTop = messagesList.scrollHeight;
+    }
+
+    sendMessageBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
         }
     });
 
@@ -104,7 +161,24 @@ document.addEventListener('DOMContentLoaded', function() {
         if (socket) {
             socket.disconnect();
         }
+        currentFriend = null;
+        messagesList.innerHTML = '';
     });
+
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (message && currentFriend) {
+            console.log('Sending message:', message);
+            const room = `${Math.min(userId, currentFriend.id)}_${Math.max(userId, currentFriend.id)}`;
+            socket.emit('send_message', {
+                sender: currentUsername,
+                receiver: currentFriend.username,
+                message: message,
+                room: room
+            });
+            messageInput.value = '';
+        }
+    }
 
     function loadFriendRequests() {
         fetch('/get_friend_requests')
