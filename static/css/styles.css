@@ -504,6 +504,40 @@ section {
     background-color: #5AB9EA; /* Updated color */
 }
 
+.input-section label {
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.input-section input,
+.input-section select {
+    margin-bottom: 16px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding and border are included in the element's total width and height */
+}
+
+.input-section button {
+    padding: 10px;
+    background-color: #5680E9; /* Updated color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 16px;
+}
+
+.input-section button:hover {
+    background-color: #5AB9EA; /* Updated color */
+}
+
+/* Additional styles for dropdown to match input */
+.input-section select {
+    font-size: 16px; /* Match input font size */
+}
+
 /* Sections with Scrollable Content */
 .concert-section,
 .music-section,
@@ -632,24 +666,22 @@ audio {
 }
 
 /* Concerts Section */
-.recommendation {
-    background: #f5f5f5;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 10px;
-    font-size: 1.1em;
-}
-
-.concert-list {
+.concert-recommendations {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 20px;
 }
 
 .concert-item {
-    background: #f5f5f5;
-    padding: 10px;
-    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 .concert-item p {
@@ -658,6 +690,53 @@ audio {
 
 .concert-item strong {
     color: #333;
+}
+
+/* Movie Recommendations */
+.movie-recommendations {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.movie-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.movie-poster {
+    width: 100px;
+    height: 150px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.movie-item h3 {
+    margin: 10px 0;
+    font-size: 1.2em;
+}
+
+.movie-item p {
+    margin: 5px 0;
+}
+
+.trailer-link {
+    display: block;
+    margin-top: 10px;
+    color: #1DB954;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.trailer-link:hover {
+    text-decoration: underline;
 }
 
 

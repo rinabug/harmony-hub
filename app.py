@@ -13,6 +13,7 @@ from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
 from backend.recent_listens import get_recently_played_tracks
 from backend.friend_system import view_friends, view_friend_requests, accept_friend_request, send_friend_request, create_friend_tables, alter_friends_table, initialize_friend_system
+from backend.tmdb_recommendations import get_movie_recommendations_from_tmdb
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
@@ -267,6 +268,24 @@ def discover():
             return redirect(url_for('discover'))
 
     return render_template('discover.html')
+
+@app.route('/get_movie_recommendations', methods=['POST'])
+def get_movie_recommendations():
+    if 'username' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
+    genre = request.form.get('genre')
+    age_rating = request.form.get('age_rating')
+    year_range = request.form.get('year_range')
+
+    try:
+        recommendations = get_movie_recommendations_from_tmdb(genre, age_rating, year_range)
+        return render_template('discover.html', recommendations=recommendations)
+    except Exception as e:
+        print(f"Error with recommendations: {e}")
+        flash("There was an error fetching recommendations.")
+        return redirect(url_for('discover'))
 
 @app.route('/profile', methods=['GET', 'POST'])
 def profile():
