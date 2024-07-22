@@ -233,11 +233,18 @@
                     <div class="bento-item medium">
                         <h2>Favorite Movies/Shows</h2>
                         <div id="favoriteMoviesContent">
-                            <ul>
+                            <div class="movie-recommendations">
                                 {% for item in favorite_movies %}
-                                    <li>{{ item }}</li>
+                                    <div class="item">
+                                        <img src="{{ item['poster'] }}" alt="{{ item['title'] }}" class="album-image">
+                                        <h3>{{ item['title'] }}</h3>
+                                        <p>{{ item['overview'] }}</p>
+                                        {% if item['trailer'] %}
+                                            <iframe width="560" height="315" src="{{ item['trailer'] }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                        {% endif %}
+                                    </div>
                                 {% endfor %}
-                            </ul>
+                            </div>
                         </div>
                     </div>
                     <div class="bento-item small">
@@ -268,16 +275,57 @@
                     </div>
                     <div class="bento-item small">
                         <h2>Recently Watched</h2>
-                        <div id="recentActivityContent">
-                            <!-- Recent activity content will be loaded dynamically -->
+                        <div id="recentlyWatchedContent">
+                            <div class="movie-recommendations">
+                                {% for item in recently_watched %}
+                                    <div class="item">
+                                        <img src="{{ item['poster'] }}" alt="{{ item['title'] }}" class="album-image">
+                                        <h3>{{ item['title'] }}</h3>
+                                        <p>{{ item['overview'] }}</p>
+                                        {% if item['trailer'] %}
+                                            <iframe width="560" height="315" src="{{ item['trailer'] }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                     <div class="bento-item small">
-                        <h2>Reviews</h2>
+                        <h2>Ratings</h2>
                         <div id="reviewContent">
-                            <!--Reviewing movie content-->
+                            <div id="favoriteMoviesContent">
+                                <ul>
+                                    {% for item in favorite_movies %}
+                                        <li class="rating-item">
+                                            <img src="{{ item.poster }}" alt="{{ item.title }}" class="album-image movie-poster">
+                                            <h3>{{ item.title }}</h3>
+                                            <div class="star-rating">
+                                                {% for i in range(5, 0, -1) %}
+                                                    <input type="radio" id="{{ i }}-stars-{{ item.id }}" name="rating-{{ item.id }}" value="{{ i }}" {% if item.rating == i %} checked {% endif %} {% if user_profile['username'] != current_user %} disabled {% endif %}>
+                                                    <label for="{{ i }}-stars-{{ item.id }}">&#9733;</label>
+                                                {% endfor %}
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div id="recentlyWatchedContent">
+                                <ul>
+                                    {% for item in recently_watched %}
+                                        <li class="rating-item">
+                                            <img src="{{ item.poster }}" alt="{{ item.title }}" class="album-image movie-poster">
+                                            <h3>{{ item.title }}</h3>
+                                            <div class="star-rating">
+                                                {% for i in range(5, 0, -1) %}
+                                                    <input type="radio" id="{{ i }}-stars-{{ item.id }}" name="rating-{{ item.id }}" value="{{ i }}" {% if item.rating == i %} checked {% endif %} {% if user_profile['username'] != current_user %} disabled {% endif %}>
+                                                    <label for="{{ i }}-stars-{{ item.id }}">&#9733;</label>
+                                                {% endfor %}
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
                         </div>
-                    </div>
                 </div>
             </section>            
         </main>

@@ -303,6 +303,7 @@ def profile():
     recently_played_tracks = json.loads(user_profile['recently_played_tracks']) if user_profile['recently_played_tracks'] else []
     favorite_movies = json.loads(user_profile['favorite_movies']) if user_profile['favorite_movies'] else []
     recently_watched = json.loads(user_profile['recently_watched']) if user_profile['recently_watched'] else []
+    ratings = json.loads(user_profile['ratings']) if user_profile['ratings'] else []
     
     if request.method == 'POST':
         new_username = request.form['username']
@@ -401,7 +402,7 @@ def profile():
     profile_conn.commit()
     profile_conn.close()
 
-    return render_template('profile.html', username=username, favorite_music=favorite_music, user_profile=user_profile, recently_played_tracks=recently_played_tracks, favorite_movies=favorite_movies, recently_watched=recently_watched)
+    return render_template('profile.html', username=username, favorite_music=favorite_music, user_profile=user_profile, recently_played_tracks=recently_played_tracks, favorite_movies=favorite_movies, recently_watched=recently_watched, ratings=ratings)
 
 
 @app.route('/user/<username>')
@@ -417,17 +418,19 @@ def view_user_profile(username):
     if user_profile:
         favorite_music = json.loads(user_profile['favorite_music']) if user_profile['favorite_music'] else []
         recently_played_tracks = json.loads(user_profile['recently_played_tracks']) if user_profile['recently_played_tracks'] else []
+        favorite_movies = json.loads(user_profile['favorite_movies']) if user_profile['favorite_movies'] else []
+        recently_watched = json.loads(user_profile['recently_watched']) if user_profile['recently_watched'] else []
+        ratings = json.loads(user_profile['reviews']) if user_profile['reviews'] else []
 
-        # Placeholder for badges and recent activities
-        badges = []  # You should replace this with actual badge data from your database
-        recent_activity = []  # You should replace this with actual recent activity data from your database
+        badges = []  # Placeholder for badges
 
         return render_template('user_profile.html',
                                user_profile=user_profile,
                                favorite_music=favorite_music,
                                recently_played_tracks=recently_played_tracks,
-                               favorite_movies=[],  # Add actual favorite movies if available
-                               recent_activity=recent_activity,
+                               favorite_movies=favorite_movies,
+                               recently_watched=recently_watched,
+                               ratings=ratings,
                                badges=badges)
     else:
         flash('User not found.', 'danger')
@@ -523,7 +526,8 @@ def user_profile(username):
     if 'username' not in session:
         flash("Please log in to access this page.")
         return redirect(url_for('login'))
-
+    
+    current_user = session['username']
     conn = get_db_connection()
     user_profile = get_profile(conn, username)
     
@@ -531,18 +535,27 @@ def user_profile(username):
         flash("User not found.")
         return redirect(url_for('find_friend'))
     
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE username = ?", (user_profile['username'],))
+    user_id = cursor.fetchone()['id']
+    ratings = get_movie_ratings(user_id)
+
     favorite_music = json.loads(user_profile['favorite_music']) if user_profile['favorite_music'] else []
     recently_played_tracks = json.loads(user_profile['recently_played_tracks']) if user_profile['recently_played_tracks'] else []
+    favorite_movies = json.loads(user_profile['favorite_movies']) if user_profile['favorite_movies'] else []
+    recently_watched = json.loads(user_profile['recently_watched']) if user_profile['recently_watched'] else []
 
-    # Placeholder for badges and recent activities
-    badges = []  # You should replace this with actual badge data from your database
-    recent_activity = []  # You should replace this with actual recent activity data from your database
+    # Placeholder for badges 
+    badges = [] 
 
     return render_template('user_profile.html', 
                            user_profile=user_profile, 
-                           favorite_music=favorite_music, 
-                           favorite_movies=[],  # Add actual favorite movies if available
-                           recent_activity=recent_activity,
+                           favorite_music=favorite_music,
+                           recently_played_tracks=recently_played_tracks, 
+                           favorite_movies=favorite_movies,
+                           recently_watched=recently_watched,
+                           current_user=current_user,
+                           ratings=ratings,
                            badges=badges)
 
 def search_movie(query):
@@ -644,38 +657,42 @@ def add_recently_watched():
     profile_conn.close()
     return jsonify({"status": "success"})
 
-@app.route('/add_review', methods=['POST'])
-def add_review():
+@app.route('/update_rating', methods=['POST'])
+def update_rating():
     if 'username' not in session:
-        flash("Please log in to access this page.")
-        return redirect(url_for('login'))
+        return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
 
-    title = request.form['title']
-    review_text = request.form['review_text']
+    data = request.json
+    movie_id = data['movie_id']
+    rating = data['rating']
     username = session['username']
 
-    profile_conn = get_db_connection()
-    cursor = profile_conn.cursor()
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+    user_id = cursor.fetchone()['id']
 
     cursor.execute('''
-    SELECT reviews FROM profiles WHERE username = ?
-    ''', (username,))
-    reviews = cursor.fetchone()[0]
-    reviews = json.loads(reviews) if reviews else []
+    INSERT INTO movie_ratings (user_id, movie_id, rating)
+    VALUES (?, ?, ?)
+    ON CONFLICT(user_id, movie_id) DO UPDATE SET rating = excluded.rating
+    ''', (user_id, movie_id, rating))
 
-    reviews.append({'title': title, 'review_text': review_text})
+    conn.commit()
+    conn.close()
 
-    cursor.execute('''
-    UPDATE profiles
-    SET reviews = ?
-    WHERE username = ?
-    ''', (json.dumps(reviews), username))
+    return jsonify({'status': 'success'})
 
-    profile_conn.commit()
-    profile_conn.close()
+def get_movie_ratings(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT movie_id, rating FROM movie_ratings WHERE user_id = ?", (user_id,))
+    ratings = cursor.fetchall()
+    conn.close()
+    return {rating['movie_id']: rating['rating'] for rating in ratings}
 
-    flash('Review added successfully', 'success')
-    return redirect(url_for('profile'))
+
 
 
 

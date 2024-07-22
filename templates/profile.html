@@ -256,6 +256,32 @@
     font-size: 0.9em;
     color: #333;
 }
+.star-rating {
+    display: flex;
+    direction: row-reverse;
+    justify-content: flex-end;
+    font-size: 1.5em;
+}
+
+.star-rating input[type="radio"] {
+    display: none;
+}
+
+.star-rating label {
+    color: #ccc;
+    cursor: pointer;
+}
+
+.star-rating input[type="radio"]:checked ~ label {
+    color: #5680E9;
+}
+
+ .star-rating input[type="radio"]:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #5680E9;
+        }
+
 </style>
 </head>
 <body>
@@ -418,21 +444,48 @@
                         <div id="recently-watched-results"></div>
                     </div>                              
                     <div class="bento-item small">
-                        <h2>Reviews</h2>
+                        <h2>Your Ratings</h2>
                         <div id="reviewContent">
-                            <ul>
-                                {% for review in reviews %}
-                                    <li>{{ review.title }} - {{ review.review_text }}</li>
+                            <ul id="reviewsList">
+                                {% for item in favorite_movies %}
+                                    <li data-movie-id="{{ item.id }}">
+                                        <img src="{{ item.poster }}" alt="{{ item.title }}" style="width: 50px; height: 75px;">
+                                        {{ item.title }}
+                                        <div class="star-rating">
+                                            <input type="radio" id="5-stars-{{ item.id }}" name="rating-{{ item.id }}" value="5">
+                                            <label for="5-stars-{{ item.id }}">&#9733;</label>
+                                            <input type="radio" id="4-stars-{{ item.id }}" name="rating-{{ item.id }}" value="4">
+                                            <label for="4-stars-{{ item.id }}">&#9733;</label>
+                                            <input type="radio" id="3-stars-{{ item.id }}" name="rating-{{ item.id }}" value="3">
+                                            <label for="3-stars-{{ item.id }}">&#9733;</label>
+                                            <input type="radio" id="2-stars-{{ item.id }}" name="rating-{{ item.id }}" value="2">
+                                            <label for="2-stars-{{ item.id }}">&#9733;</label>
+                                            <input type="radio" id="1-stars-{{ item.id }}" name="rating-{{ item.id }}" value="1">
+                                            <label for="1-stars-{{ item.id }}">&#9733;</label>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                                {% for item in recently_watched %}
+                                    <li data-movie-id="{{ item.id }}">
+                                        <img src="{{ item.poster }}" alt="{{ item.title }}" style="width: 50px; height: 75px;">
+                                        {{ item.title }}
+                                        <div class="star-rating">
+                                            <input type="radio" id="5-stars-{{ item.id }}" name="rating-{{ item.id }}" value="5">
+                                            <label for="5-stars-{{ item.id }}">&#9733;</label>
+                                            <input type="radio" id="4-stars-{{ item.id }}" name="rating-{{ item.id }}" value="4">
+                                            <label for="4-stars-{{ item.id }}">&#9733;</label>
+                                            <input type="radio" id="3-stars-{{ item.id }}" name="rating-{{ item.id }}" value="3">
+                                            <label for="3-stars-{{ item.id }}">&#9733;</label>
+                                            <input type="radio" id="2-stars-{{ item.id }}" name="rating-{{ item.id }}" value="2">
+                                            <label for="2-stars-{{ item.id }}">&#9733;</label>
+                                            <input type="radio" id="1-stars-{{ item.id }}" name="rating-{{ item.id }}" value="1">
+                                            <label for="1-stars-{{ item.id }}">&#9733;</label>
+                                        </div>
+                                    </li>
                                 {% endfor %}
                             </ul>
-                            <form method="POST" action="{{ url_for('add_review') }}">
-                                <label for="review_title">Movie/Show Title:</label>
-                                <input type="text" id="review_title" name="title" required>
-                                <label for="review_text">Your Review:</label>
-                                <textarea id="review_text" name="review_text" required></textarea>
-                                <button type="submit">Submit Review</button>
-                            </form>
                         </div>
+                    </div>
                     <div class="profile" id="profile-section">
                         <h2>Edit Your Profile</h2>
                         <div class="profile-container">
@@ -476,6 +529,66 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const starRatings = document.querySelectorAll('.star-rating input[type="radio"]');
+
+        starRatings.forEach(star => {
+            star.addEventListener('change', function () {
+                const movieId = this.name.split('-')[1];
+                const rating = this.value;
+
+                fetch('/update_rating', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        movie_id: movieId,
+                        rating: rating
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log(`Rating updated: ${movieId} - ${rating}`);
+                    } else {
+                        console.error('Failed to update rating');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    });
+
+    function submitFormAndReload(event) {
+        event.preventDefault(); // Prevent the default form submission behavior
+
+        const form = event.target;
+
+        // Create a new FormData object
+        const formData = new FormData(form);
+
+        // Create an XMLHttpRequest object
+        const xhr = new XMLHttpRequest();
+        xhr.open(form.method, form.action, true);
+
+        // Set up a callback to handle the response
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                // If the request was successful, reload the page
+                window.location.reload();
+            } else {
+                // Handle errors if needed
+                console.error('Form submission failed:', xhr.statusText);
+            }
+        };
+
+        // Send the form data
+        xhr.send(formData);
+    }
+</script>
+
     
 </body>
 </html>

@@ -27,6 +27,9 @@ def create_tables():
         profile_picture TEXT,
         favorite_music TEXT,
         recently_played_tracks TEXT,
+        favorite_movies TEXT,
+        recently_watched TEXT,
+        ratings TEXT,
         FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
@@ -46,6 +49,14 @@ def create_tables():
         FOREIGN KEY (user1_username) REFERENCES users (username),
         FOREIGN KEY (user2_username) REFERENCES users (username)
     );
+                         
+    CREATE TABLE IF NOT EXISTS movie_ratings (
+        user_id INTEGER NOT NULL,
+        movie_id INTEGER NOT NULL,
+        rating INTEGER NOT NULL,
+        PRIMARY KEY (user_id, movie_id),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    );
     ''')
     conn.commit()
     conn.close()
@@ -64,6 +75,8 @@ def alter_profiles_table():
         cursor.execute("ALTER TABLE profiles ADD COLUMN favorite_movies TEXT")
     if 'recently_watched' not in columns:
         cursor.execute("ALTER TABLE profiles ADD COLUMN recently_watched TEXT")
+    if 'ratings' not in columns:
+        cursor.execute("ALTER TABLE profiles ADD COLUMN ratings TEXT")
     
     conn.commit()
     conn.close()
@@ -114,6 +127,7 @@ def get_profile(conn, username):
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM profiles WHERE username = ?', (username,))
     row = cursor.fetchone()
+    
     return dict(row) if row else None
 
 
