@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask_mail import Mail, Message
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
@@ -31,6 +32,15 @@ sp_oauth = SpotifyOAuth(
     cache_handler=cache_handler,
     show_dialog=True
 )
+# Flask-Mail configuration using environment variables
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == 'True'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+
+mail = Mail(app)
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
@@ -131,6 +141,28 @@ def signup():
             if success:
                 session['username'] = username
                 flash('Registration successful. Please connect a music platform.', 'success')
+                # added these for the email notification
+                              # Send welcome email
+                msg = Message("Welcome to MusicBuddyApp!",
+                              recipients=[email])
+                msg.body = f"""
+                Hello {username},
+
+                Welcome to MusicBuddyApp!
+
+                Thank you for registering at MusicBuddyApp. We are thrilled to have you on board. Our service offers personalized music recommendations.
+
+                To get started, you can connect your Spotify account and explore the features we offer.
+
+                If you have any questions or need assistance, feel free to reach out to our support team at support@musicbuddyapp.com.
+
+                Enjoy your musical journey with MusicBuddyApp!
+
+                Best regards,
+                The MusicBuddyApp Team
+                """
+                mail.send(msg)
+                # ends here 
                 return redirect(url_for('connect'))
             else:
                 flash('An error occurred during registration. Please try again.', 'danger')
