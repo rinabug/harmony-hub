@@ -19,8 +19,9 @@ import datetime
 
 
 app = Flask(__name__)
-socketio = SocketIO(app) #messaging
 app.config['SECRET_KEY'] = os.urandom(64)
+socketio = SocketIO(app, cors_allowed_origins="*") #messaging
+
 DATABASE = 'users.db'
 
 load_dotenv()
@@ -385,14 +386,43 @@ def on_join(data):
     username = data['username']
     room = data['room']
     join_room(room)
-    emit('status', {'msg': f'{username} has entered the room.'}, room=room)
+    print(f"User {username} joined room {room}")
+    emit('user_joined', {'username': username}, room=room)
+
 
 @socketio.on('leave')
 def on_leave(data):
     username = data['username']
     room = data['room']
     leave_room(room)
-    emit('status', {'msg': f'{username} has left the room.'}, room=room)
+    print(f"User {username} left room {room}")
+    emit('user_left', {'username': username}, room=room)
+
+@socketio.on('send_message')
+def handle_message(data):
+    print("Received message:", data)
+    sender = data['sender']
+    receiver = data['receiver']
+    content = data['message']
+    room = data['room']
+    
+    # Save message to database
+    conn = get_db_connection()
+    sender_id = get_user_id_by_username(conn, sender)
+    receiver_id = get_user_id_by_username(conn, receiver)
+    message_id = send_message(conn, sender_id, receiver_id, content)
+    conn.close()
+    
+    if message_id:
+        emit('new_message', {
+            'id': message_id,
+            'sender': sender,
+            'content': content,
+            'timestamp': datetime.datetime.now().isoformat()
+        }, room=room)
+        print(f"Message sent to room {room}")
+    else:
+        emit('error', {'msg': 'Failed to send message'}, room=request.sid)
 
 
 if __name__ == '__main__':
