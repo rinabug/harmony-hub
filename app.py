@@ -5,12 +5,21 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
-from backend.user_auth import create_users_table, is_valid_email, is_valid_password, register_user, login_user
+from backend.user_auth import create_users_table, is_valid_email, is_valid_password, register_user, login_user, get_user_id_by_username, get_pending_friend_requests, get_friends, send_friend_request, accept_friend_request, reject_friend_request
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
 from backend.recent_listens import get_recently_played_tracks
 
+#messaging
+
+from flask_socketio import SocketIO, emit, join_room, leave_room
+from backend.user_auth import send_message, get_messages, mark_messages_as_read
+import datetime
+
+
+
 app = Flask(__name__)
+socketio = SocketIO(app) #messaging
 app.config['SECRET_KEY'] = os.urandom(64)
 DATABASE = 'users.db'
 
@@ -214,18 +223,18 @@ def game():
 def find_friend():
     return render_template('find_friend.html')
 
-#example data
-users = [
-    {'username': 'john_doe'},
-    {'username': 'jane_smith'},
-    {'username': 'alice_jones'},
-    {'username': 'bob_brown'}
-]
 
 @app.route('/search_friends', methods=['GET'])
 def search_friends():
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
     query = request.args.get('q')
-    results = [user for user in users if query.lower() in user['username'].lower()]
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT username FROM users WHERE username LIKE ? AND username != ?", (f'%{query}%', session['username']))
+    results = [{'username': row[0]} for row in cursor.fetchall()]
+    conn.close()
     return jsonify(results)
 
 def ensure_token_validity(token_info):
@@ -236,6 +245,154 @@ def ensure_token_validity(token_info):
         token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
         session['token_info'] = token_info
     return token_info
+
+@app.route('/send_friend_request', methods=['POST'])
+def send_friend_request_route():
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    data = request.json
+    receiver_username = data.get('username')
+    
+    conn = get_db_connection()
+    sender_id = get_user_id_by_username(conn, session['username'])
+    receiver_id = get_user_id_by_username(conn, receiver_username)
+    
+    if not receiver_id:
+        conn.close()
+        return jsonify({'error': 'User not found'}), 404
+    
+    try:
+        success = send_friend_request(conn, sender_id, receiver_id)
+        conn.close()
+        
+        if success:
+            return jsonify({'message': 'Friend request sent'}), 200
+        else:
+            return jsonify({'error': 'Failed to send friend request'}), 400
+    except Exception as e:
+        conn.close()
+        print(f"Error sending friend request: {str(e)}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+
+@app.route('/accept_friend_request', methods=['POST'])
+def accept_friend_request_route():
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    data = request.json
+    request_id = data.get('request_id')
+    
+    conn = get_db_connection()
+    user_id = get_user_id_by_username(conn, session['username'])
+    
+    # Fetch the sender_id from the friend_requests table
+    cursor = conn.cursor()
+    cursor.execute('SELECT sender_id FROM friend_requests WHERE id = ? AND receiver_id = ?', (request_id, user_id))
+    result = cursor.fetchone()
+    
+    if not result:
+        conn.close()
+        return jsonify({'error': 'Friend request not found'}), 404
+    
+    sender_id = result[0]
+    
+    if accept_friend_request(conn, request_id, user_id, sender_id):
+        conn.close()
+        return jsonify({'message': 'Friend request accepted'}), 200
+    else:
+        conn.close()
+        return jsonify({'error': 'Failed to accept friend request'}), 400
+
+@app.route('/reject_friend_request', methods=['POST'])
+def reject_friend_request_route():
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    data = request.json
+    request_id = data.get('request_id')
+    
+    conn = get_db_connection()
+    user_id = get_user_id_by_username(conn, session['username'])
+    
+    if reject_friend_request(conn, request_id, user_id):
+        conn.close()
+        return jsonify({'message': 'Friend request rejected'}), 200
+    else:
+        conn.close()
+        return jsonify({'error': 'Failed to reject friend request'}), 400
+
+@app.route('/get_friend_requests', methods=['GET'])
+def get_friend_requests_route():
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    conn = get_db_connection()
+    user_id = get_user_id_by_username(conn, session['username'])
+    friend_requests = get_pending_friend_requests(conn, user_id)
+    conn.close()
+    
+    return jsonify({'requests': [{'id': r[0], 'username': r[1], 'sender_id': r[2]} for r in friend_requests]}), 200
+
+@app.route('/get_friends', methods=['GET'])
+def get_friends_route():
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    conn = get_db_connection()
+    user_id = get_user_id_by_username(conn, session['username'])
+    friends = get_friends(conn, user_id)
+    conn.close()
+    
+    return jsonify({'friends': [{'id': f[0], 'username': f[1]} for f in friends]}), 200
+
+#messaging
+@app.route('/get_messages/<int:friend_id>')
+def get_messages_route(friend_id):
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    conn = get_db_connection()
+    user_id = get_user_id_by_username(conn, session['username'])
+    messages = get_messages(conn, user_id, friend_id)
+    conn.close()
+    
+    return jsonify({'messages': messages}), 200
+
+@socketio.on('send_message')
+def handle_message(data):
+    conn = get_db_connection()
+    sender_id = get_user_id_by_username(conn, data['sender'])
+    receiver_id = get_user_id_by_username(conn, data['receiver'])
+    content = data['message']
+    
+    message_id = send_message(conn, sender_id, receiver_id, content)
+    conn.close()
+    
+    if message_id:
+        room = f"{min(sender_id, receiver_id)}_{max(sender_id, receiver_id)}"
+        emit('new_message', {
+            'id': message_id,
+            'sender': data['sender'],
+            'content': content,
+            'timestamp': datetime.now().isoformat()
+        }, room=room)
+    else:
+        emit('error', {'msg': 'Failed to send message'})
+
+@socketio.on('join')
+def on_join(data):
+    username = data['username']
+    room = data['room']
+    join_room(room)
+    emit('status', {'msg': f'{username} has entered the room.'}, room=room)
+
+@socketio.on('leave')
+def on_leave(data):
+    username = data['username']
+    room = data['room']
+    leave_room(room)
+    emit('status', {'msg': f'{username} has left the room.'}, room=room)
 
 
 if __name__ == '__main__':
