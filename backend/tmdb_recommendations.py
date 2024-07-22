@@ -84,4 +84,3 @@ def get_movie_trailer(movie_id):
             if video['site'] == 'YouTube' and video['type'] == 'Trailer':
                 return f"https://www.youtube.com/embed/{video['key']}"
     return None
-

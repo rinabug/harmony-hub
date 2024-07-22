@@ -335,21 +335,34 @@
                             </div>
                         </div>
                     </div>
-                    <div class="bento-item medium">
+                    <!-- Favorite Movies/Shows Section -->
+                    <div class="bento-item small">
                         <h2>Favorite Movies/Shows</h2>
                         <div id="favoriteMoviesContent">
-                            <ul>
-                                {% for item in favorite_movies %}
-                                    <li>{{ item.title }}</li>
-                                {% endfor %}
-                            </ul>
-                            <form method="POST" action="{{ url_for('add_favorite_movie') }}">
-                                <label for="movie_title">Movie/Show Title:</label>
-                                <input type="text" id="movie_title" name="title" required>
-                                <button type="submit">Add to Favorites</button>
-                            </form>
+                            {% if favorite_movies %}
+                                <div class="movie-recommendations">
+                                    {% for movie in favorite_movies %}
+                                        <div class="movie-item">
+                                            {% if movie.trailer %}
+                                                <iframe width="560" height="315" src="{{ movie.trailer }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                            {% endif %}
+                                            <h3>{{ movie.title }}</h3>
+                                            <p>{{ movie.overview }}</p>
+                                            <img src="{{ movie.poster }}" alt="{{ movie.title }}" class="album-image">
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p>No favorite movies/shows added yet.</p>
+                            {% endif %}
                         </div>
-                    </div>
+                        <form id="favorite-movie-form" >
+                            <label for="favorite-movie-search">Search and add to favorites:</label>
+                            <input type="text" id="favorite-movie-search" name="query" placeholder="Search for a movie or show" required>
+                            <button type="submit">Search</button>
+                        </form>
+                        <div id="favorite-movie-results"></div>
+                    </div>                    
                     <div class="bento-item small">
                         <h2>Recently Played</h2>
                         <div id="recentlyPlayedContent">
@@ -376,21 +389,34 @@
                             {% endif %}
                         </div>
                     </div>
+                    <!-- Recently Watched Section -->
                     <div class="bento-item small">
                         <h2>Recently Watched</h2>
                         <div id="recentlyWatchedContent">
-                            <ul>
-                                {% for item in recently_watched %}
-                                    <li>{{ item.title }}</li>
-                                {% endfor %}
-                            </ul>
-                            <form method="POST" action="{{ url_for('add_recently_watched') }}">
-                                <label for="watched_title">Movie/Show Title:</label>
-                                <input type="text" id="watched_title" name="title" required>
-                                <button type="submit">Add to Recently Watched</button>
-                            </form>
+                            {% if recently_watched %}
+                                <div class="movie-recommendations">
+                                    {% for movie in recently_watched %}
+                                        <div class="movie-item">
+                                            {% if movie.trailer %}
+                                                <iframe width="560" height="315" src="{{ movie.trailer }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                            {% endif %}
+                                            <h3>{{ movie.title }}</h3>
+                                            <p>{{ movie.overview }}</p>
+                                            <img src="{{ movie.poster }}" alt="{{ movie.title }}" class="album-image">
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p>No recently watched movies/shows added yet.</p>
+                            {% endif %}
                         </div>
-                    </div>
+                        <form id="recently-watched-form">
+                            <label for="recently-watched-search">Search and add to recently watched:</label>
+                            <input type="text" id="recently-watched-search" name="query" placeholder="Search for a movie or show" required>
+                            <button type="submit">Search</button>
+                        </form>
+                        <div id="recently-watched-results"></div>
+                    </div>                              
                     <div class="bento-item small">
                         <h2>Reviews</h2>
                         <div id="reviewContent">
@@ -450,5 +476,6 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+    
 </body>
 </html>

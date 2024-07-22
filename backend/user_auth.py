@@ -60,6 +60,10 @@ def alter_profiles_table():
         cursor.execute("ALTER TABLE profiles ADD COLUMN favorite_music TEXT")
     if 'recently_played_tracks' not in columns:
         cursor.execute("ALTER TABLE profiles ADD COLUMN recently_played_tracks TEXT")
+    if 'favorite_movies' not in columns:
+        cursor.execute("ALTER TABLE profiles ADD COLUMN favorite_movies TEXT")
+    if 'recently_watched' not in columns:
+        cursor.execute("ALTER TABLE profiles ADD COLUMN recently_watched TEXT")
     
     conn.commit()
     conn.close()
@@ -109,7 +113,9 @@ def update_profile(conn, user_id, email, bio, profile_picture):
 def get_profile(conn, username):
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM profiles WHERE username = ?', (username,))
-    return cursor.fetchone()
+    row = cursor.fetchone()
+    return dict(row) if row else None
+
 
 def set_reset_token(conn, email, token):
     cursor = conn.cursor()

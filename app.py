@@ -1,3 +1,4 @@
+import requests
 from dotenv import load_dotenv
 import os
 import sqlite3
@@ -23,6 +24,7 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload size
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 load_dotenv()
+TMDB_API_KEY='9543dc934149c1e3c3e522690966c634'
 
 client_id = os.getenv('SPOTIFY_CLIENT_ID')
 client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
@@ -299,6 +301,8 @@ def profile():
 
     favorite_music = json.loads(user_profile['favorite_music']) if user_profile['favorite_music'] else []
     recently_played_tracks = json.loads(user_profile['recently_played_tracks']) if user_profile['recently_played_tracks'] else []
+    favorite_movies = json.loads(user_profile['favorite_movies']) if user_profile['favorite_movies'] else []
+    recently_watched = json.loads(user_profile['recently_watched']) if user_profile['recently_watched'] else []
     
     if request.method == 'POST':
         new_username = request.form['username']
@@ -397,7 +401,7 @@ def profile():
     profile_conn.commit()
     profile_conn.close()
 
-    return render_template('profile.html', username=username, favorite_music=favorite_music, user_profile=user_profile, recently_played_tracks=recently_played_tracks)
+    return render_template('profile.html', username=username, favorite_music=favorite_music, user_profile=user_profile, recently_played_tracks=recently_played_tracks, favorite_movies=favorite_movies, recently_watched=recently_watched)
 
 
 @app.route('/user/<username>')
@@ -541,38 +545,65 @@ def user_profile(username):
                            recent_activity=recent_activity,
                            badges=badges)
 
-@app.route('/add_favorite_movie', methods=['POST'])
-def add_favorite_movie():
+def search_movie(query):
+    url = f"https://api.themoviedb.org/3/search/movie"
+    params = {
+        'api_key': TMDB_API_KEY,
+        'query': query
+    }
+    response = requests.get(url, params=params)
+    return response.json()
+
+@app.route('/search_movie', methods=['POST'])
+def search_movie_route():
+    query = request.json.get('query')
+    url = f"https://api.themoviedb.org/3/search/movie"
+    params = {
+        'api_key': TMDB_API_KEY,
+        'query': query
+    }
+    response = requests.get(url, params=params)
+    search_results = response.json()
+    return jsonify(search_results)
+
+@app.route('/add_favorite', methods=['POST'])
+def add_favorite():
     if 'username' not in session:
         flash("Please log in to access this page.")
         return redirect(url_for('login'))
 
-    title = request.form['title']
     username = session['username']
+    movie_data = request.json
+    movie_id = movie_data['id']
+    movie_title = movie_data['title']
+    movie_poster = f"https://image.tmdb.org/t/p/w500{movie_data['poster_path']}"
+    movie_overview = movie_data['overview']
+    movie_trailer = movie_data.get('trailer')
 
     profile_conn = get_db_connection()
-    cursor = profile_conn.cursor()
+    user_profile = get_profile(profile_conn, username)
 
-    cursor.execute('''
-    SELECT favorite_movies FROM profiles WHERE username = ?
-    ''', (username,))
-    favorite_movies = cursor.fetchone()[0]
-    favorite_movies = json.loads(favorite_movies) if favorite_movies else []
+    favorite_movies = json.loads(user_profile['favorite_movies']) if user_profile['favorite_movies'] else []
+    new_favorite = {
+        'id': movie_id,
+        'title': movie_title,
+        'poster': movie_poster,
+        'overview': movie_overview,
+        'trailer': movie_trailer
+    }
 
-    favorite_movies.append({'title': title})
+    if new_favorite not in favorite_movies:
+        favorite_movies.append(new_favorite)
+        cursor = profile_conn.cursor()
+        cursor.execute('''
+            UPDATE profiles
+            SET favorite_movies = ?
+            WHERE username = ?
+        ''', (json.dumps(favorite_movies), username))
+        profile_conn.commit()
 
-    cursor.execute('''
-    UPDATE profiles
-    SET favorite_movies = ?
-    WHERE username = ?
-    ''', (json.dumps(favorite_movies), username))
-
-    profile_conn.commit()
     profile_conn.close()
-
-    flash('Favorite movie/show added successfully', 'success')
-    return redirect(url_for('profile'))
-
+    return jsonify({"status": "success"})
 
 @app.route('/add_recently_watched', methods=['POST'])
 def add_recently_watched():
@@ -580,32 +611,38 @@ def add_recently_watched():
         flash("Please log in to access this page.")
         return redirect(url_for('login'))
 
-    title = request.form['title']
     username = session['username']
+    movie_data = request.json
+    movie_id = movie_data['id']
+    movie_title = movie_data['title']
+    movie_poster = f"https://image.tmdb.org/t/p/w500{movie_data['poster_path']}"
+    movie_overview = movie_data['overview']
+    movie_trailer = movie_data.get('trailer')
 
     profile_conn = get_db_connection()
-    cursor = profile_conn.cursor()
+    user_profile = get_profile(profile_conn, username)
 
-    cursor.execute('''
-    SELECT recently_watched FROM profiles WHERE username = ?
-    ''', (username,))
-    recently_watched = cursor.fetchone()[0]
-    recently_watched = json.loads(recently_watched) if recently_watched else []
+    recently_watched = json.loads(user_profile['recently_watched']) if user_profile['recently_watched'] else []
+    new_watched = {
+        'id': movie_id,
+        'title': movie_title,
+        'poster': movie_poster,
+        'overview': movie_overview,
+        'trailer': movie_trailer
+    }
 
-    recently_watched.append({'title': title})
+    if new_watched not in recently_watched:
+        recently_watched.append(new_watched)
+        cursor = profile_conn.cursor()
+        cursor.execute('''
+            UPDATE profiles
+            SET recently_watched = ?
+            WHERE username = ?
+        ''', (json.dumps(recently_watched), username))
+        profile_conn.commit()
 
-    cursor.execute('''
-    UPDATE profiles
-    SET recently_watched = ?
-    WHERE username = ?
-    ''', (json.dumps(recently_watched), username))
-
-    profile_conn.commit()
     profile_conn.close()
-
-    flash('Recently watched movie/show added successfully', 'success')
-    return redirect(url_for('profile'))
-
+    return jsonify({"status": "success"})
 
 @app.route('/add_review', methods=['POST'])
 def add_review():

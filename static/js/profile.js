@@ -70,3 +70,151 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+document.addEventListener('DOMContentLoaded', function () {
+    const favoriteMovieForm = document.getElementById('favorite-movie-form');
+    const recentlyWatchedForm = document.getElementById('recently-watched-form');
+    
+    favoriteMovieForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const query = document.getElementById('favorite-movie-search').value;
+        searchAndAddMovie(query, 'favorite');
+    });
+
+    recentlyWatchedForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const query = document.getElementById('recently-watched-search').value;
+        searchAndAddMovie(query, 'recently-watched');
+    });
+});
+
+function searchAndAddMovie(query, type) {
+    fetch(`/search_movie`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ query: query })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultsDiv = type === 'favorite' ? document.getElementById('favorite-movie-results') : document.getElementById('recently-watched-results');
+        resultsDiv.innerHTML = '';  // Clear previous results
+
+        data.results.forEach(result => {
+            const movieItem = document.createElement('div');
+            movieItem.classList.add('movie-item');
+
+            const poster = document.createElement('img');
+            poster.src = `https://image.tmdb.org/t/p/w500${result.poster_path}`;
+            poster.alt = result.title;
+            poster.classList.add('album-image');
+
+            const title = document.createElement('h3');
+            title.textContent = result.title;
+
+            const overview = document.createElement('p');
+            overview.textContent = result.overview;
+
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = type === 'favorite' ? '/add_favorite' : '/add_recently_watched';
+
+            const movieIdInput = document.createElement('input');
+            movieIdInput.type = 'hidden';
+            movieIdInput.name = 'movie_id';
+            movieIdInput.value = result.id;
+
+            const movieTitleInput = document.createElement('input');
+            movieTitleInput.type = 'hidden';
+            movieTitleInput.name = 'movie_title';
+            movieTitleInput.value = result.title;
+
+            const moviePosterInput = document.createElement('input');
+            moviePosterInput.type = 'hidden';
+            moviePosterInput.name = 'movie_poster';
+            moviePosterInput.value = `https://image.tmdb.org/t/p/w500${result.poster_path}`;
+
+            const movieOverviewInput = document.createElement('input');
+            movieOverviewInput.type = 'hidden';
+            movieOverviewInput.name = 'movie_overview';
+            movieOverviewInput.value = result.overview;
+
+            const movieTrailerInput = document.createElement('input');
+            movieTrailerInput.type = 'hidden';
+            movieTrailerInput.name = 'movie_trailer';
+            movieTrailerInput.value = result.trailer;
+
+            const button = document.createElement('button');
+            button.type = 'submit';
+            button.textContent = type === 'favorite' ? 'Add to Favorites' : 'Add to Recently Watched';
+
+            form.appendChild(movieIdInput);
+            form.appendChild(movieTitleInput);
+            form.appendChild(moviePosterInput);
+            form.appendChild(movieOverviewInput);
+            form.appendChild(movieTrailerInput);
+            form.appendChild(button);
+
+            movieItem.appendChild(poster);
+            movieItem.appendChild(title);
+            movieItem.appendChild(overview);
+            movieItem.appendChild(form);
+
+            resultsDiv.appendChild(movieItem);
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                addMovie(result, type);
+            });
+        });
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function addMovie(movie, type) {
+    const url = type === 'favorite' ? '/add_favorite' : '/add_recently_watched';
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(movie)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const section = type === 'favorite' ? document.getElementById('favoriteMoviesContent') : document.getElementById('recentlyWatchedContent');
+            const movieItem = document.createElement('div');
+            movieItem.classList.add('movie-item');
+
+            const poster = document.createElement('img');
+            poster.src = movie.poster_path;
+            poster.alt = movie.title;
+            poster.classList.add('album-image');
+
+            const title = document.createElement('h3');
+            title.textContent = movie.title;
+
+            const overview = document.createElement('p');
+            overview.textContent = movie.overview;
+
+            movieItem.appendChild(poster);
+            movieItem.appendChild(title);
+            movieItem.appendChild(overview);
+
+            if (movie.trailer) {
+                const trailer = document.createElement('iframe');
+                trailer.src = movie.trailer;
+                trailer.width = '560';
+                trailer.height = '315';
+                trailer.frameBorder = '0';
+                trailer.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+                trailer.allowFullscreen = true;
+                movieItem.appendChild(trailer);
+            }
+
+            section.insertBefore(movieItem, section.firstChild);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
