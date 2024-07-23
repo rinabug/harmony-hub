@@ -20,7 +20,6 @@ def create_tables():
         reset_token TEXT
     );
                          
-
     CREATE TABLE IF NOT EXISTS profiles (
         user_id INTEGER PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
@@ -163,8 +162,7 @@ def reset_password(conn, token, new_password):
     cursor.execute("UPDATE users SET password = ?, reset_token = NULL WHERE reset_token = ?", (hashed_password, token))
     conn.commit()
 
-#friend stuff
-
+# Friend functionalities
 def send_friend_request(conn, sender_id, receiver_id):
     cursor = conn.cursor()
     try:
@@ -180,14 +178,12 @@ def send_friend_request(conn, sender_id, receiver_id):
 def accept_friend_request(conn, request_id, user_id, friend_id):
     cursor = conn.cursor()
     try:
-        # Update the friend request status
         cursor.execute('''
         UPDATE friend_requests
         SET status = 'accepted'
         WHERE id = ? AND receiver_id = ?
         ''', (request_id, user_id))
         
-        # Add entries to the friends table
         cursor.execute('''
         INSERT INTO friends (user_id, friend_id, status)
         VALUES (?, ?, 'accepted'), (?, ?, 'accepted')
@@ -230,7 +226,9 @@ def get_friends(conn, user_id):
     JOIN users u ON f.friend_id = u.id
     WHERE f.user_id = ? AND f.status = 'accepted'
     ''', (user_id,))
-    return cursor.fetchall()
+    friends = cursor.fetchall()
+    return [dict(friend) for friend in friends]
+
 
 def get_user_id_by_username(conn, username):
     cursor = conn.cursor()
@@ -238,25 +236,18 @@ def get_user_id_by_username(conn, username):
     result = cursor.fetchone()
     return result[0] if result else None
 
-def reject_friend_request(conn, username, request_id):
-    cursor = conn.cursor()
-    cursor.execute('''
-        DELETE FROM friend_requests 
-        WHERE id = (SELECT id FROM friend_requests WHERE id = ? AND receiver_id = (SELECT id FROM users WHERE username = ?))
-    ''', (request_id, username))
-    conn.commit()
-
-#MESSAGING:
+# Messaging functionalities
 def send_message(conn, sender_id, receiver_id, content):
     cursor = conn.cursor()
     try:
         cursor.execute('''
-        INSERT INTO messages (sender_id, receiver_id, content)
-        VALUES (?, ?, ?)
+        INSERT INTO messages (sender_id, receiver_id, content, timestamp)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
         ''', (sender_id, receiver_id, content))
         conn.commit()
         return cursor.lastrowid
-    except sqlite3.Error:
+    except sqlite3.Error as e:
+        print(f"Error sending message: {e}")
         return None
 
 def get_messages(conn, user_id, friend_id):
@@ -267,7 +258,7 @@ def get_messages(conn, user_id, friend_id):
     WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)
     ORDER BY m.timestamp ASC
     ''', (user_id, friend_id, friend_id, user_id))
-    return cursor.fetchall()
+    return [dict(row) for row in cursor.fetchall()]
 
 def mark_messages_as_read(conn, user_id, friend_id):
     cursor = conn.cursor()

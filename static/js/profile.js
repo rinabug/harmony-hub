@@ -218,3 +218,81 @@ function addMovie(movie, type) {
     })
     .catch(error => console.error('Error:', error));
 }
+
+/*notification system*/
+document.addEventListener('DOMContentLoaded', function() {
+
+        const notificationBtn = document.getElementById('notification-btn');
+        const notificationsSection = document.getElementById('notifications');
+        const notificationBadge = document.getElementById('notification-count');
+
+        notificationBtn.addEventListener('click', function() {
+            notificationsSection.classList.toggle('active');
+            if (notificationsSection.classList.contains('active')) {
+                fetchNotifications();
+            }
+        });
+
+        function fetchNotifications() {
+            fetch('/api/notifications')
+                .then(response => response.json())
+                .then(data => {
+                    notificationsSection.innerHTML = '';
+                    if (data.length === 0) {
+                        notificationsSection.innerHTML = '<p>No new notifications</p>';
+                    } else {
+                        const ul = document.createElement('ul');
+                        data.forEach(notification => {
+                            const li = document.createElement('li');
+                            li.innerHTML = `<strong>${notification.message}</strong> - ${new Date(notification.created_at).toLocaleString()}`;
+                            li.dataset.id = notification.id;
+                            li.addEventListener('click', function() {
+                                markNotificationRead(notification.id);
+                                ul.removeChild(li);
+                                updateNotificationBadge(parseInt(notificationBadge.textContent) - 1); // Update badge count immediately
+                                if (ul.children.length === 0) {
+                                    notificationsSection.innerHTML = '<p>No new notifications</p>';
+                                }
+                            });
+                            ul.appendChild(li);
+                        });
+                        notificationsSection.appendChild(ul);
+                    }
+                })
+                .catch(error => console.error('Error fetching notifications:', error));
+        }
+
+        function markNotificationRead(notificationId) {
+            fetch('/mark_notification_read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ notification_id: notificationId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Error marking notification as read');
+                }
+            })
+            .catch(error => console.error('Error marking notification as read:', error));
+        }
+
+        function updateNotificationBadge(count) {
+            if (count > 0) {
+                notificationBadge.textContent = count;
+                notificationBadge.style.display = 'inline';
+            } else {
+                notificationBadge.style.display = 'none';
+            }
+        }
+
+        // Initial fetch to set the badge count on page load
+        fetch('/api/notifications')
+            .then(response => response.json())
+            .then(data => {
+                updateNotificationBadge(data.length);
+            })
+            .catch(error => console.error('Error fetching notifications:', error));
+    });

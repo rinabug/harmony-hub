@@ -4,23 +4,25 @@ import os
 import sqlite3
 import uuid
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, json
+from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
-import hashlib
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
-from backend.user_auth import create_tables, get_db_connection, register_user, login_user, update_profile, get_profile, is_valid_email, is_valid_password, set_reset_token, get_user_by_reset_token, reset_password, alter_profiles_table, get_user_id_by_username, get_pending_friend_requests, get_friends, send_friend_request, accept_friend_request, reject_friend_request
+from backend.user_auth import (
+    create_tables, get_db_connection, register_user, login_user, update_profile, get_profile, 
+    is_valid_email, is_valid_password, set_reset_token, get_user_by_reset_token, reset_password, 
+    alter_profiles_table, get_user_id_by_username, get_pending_friend_requests, get_friends, 
+    send_friend_request, accept_friend_request, reject_friend_request, send_message, 
+    get_messages, mark_messages_as_read
+)
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
 from backend.recent_listens import get_recently_played_tracks
-from backend.friend_system import view_friends, view_friend_requests, accept_friend_request, send_friend_request, create_friend_tables, alter_friends_table, initialize_friend_system
 from backend.tmdb_recommendations import get_movie_recommendations_from_tmdb
 from backend.spotify_utils import extract_top_genres, genre_mapping
 
-#messaging
-
 from flask_socketio import SocketIO, emit, join_room, leave_room
-from backend.user_auth import send_message, get_messages, mark_messages_as_read
 from datetime import datetime
 
 
@@ -55,13 +57,52 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# Flask-Mail configuration using environment variables
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == 'True'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+
+mail = Mail(app)
+def setup_database():
+    conn = get_db_connection()
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            message TEXT,
+            is_read BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.close()
 
 @app.before_request
 def initialize_database():
+    setup_database()
     conn = get_db_connection()
     create_tables()
     alter_profiles_table()
-    initialize_friend_system(conn)
+    conn.close()
+
+# Add this function to insert notifications into the database
+def add_notification(user_id, message):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND message = ? AND is_read = 0",
+        (user_id, message)
+    )
+    count = cursor.fetchone()[0]
+
+    if count == 0:
+        cursor.execute(
+            "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+            (user_id, message)
+        )
+        conn.commit()
     conn.close()
 
 @app.route('/')
@@ -195,6 +236,26 @@ def signup():
             if success:
                 session['username'] = username
                 flash('Registration successful. Please connect a music platform.', 'success')
+                # Send welcome email
+                msg = Message("Welcome to MusicBuddyApp!",
+                              recipients=[email])
+                msg.body = f"""
+                Hello {username},
+
+                Welcome to MusicBuddyApp!
+
+                Thank you for registering at MusicBuddyApp. We are thrilled to have you on board. Our service offers personalized music recommendations.
+
+                To get started, you can connect your Spotify account and explore the features we offer.
+
+                If you have any questions or need assistance, feel free to reach out to our support team at support@musicbuddyapp.com.
+
+                Enjoy your musical journey with MusicBuddyApp!
+
+                Best regards,
+                The MusicBuddyApp Team
+                """
+                mail.send(msg)
                 return redirect(url_for('connect'))
             else:
                 flash('An error occurred during registration. Please try again.', 'danger')
@@ -209,6 +270,8 @@ def login():
         user = login_user(conn, identifier, password)
         if user:
             session['username'] = user['username']
+            # Add this line to create a login notification
+            add_notification(user[0], f"Welcome back, {user[1]}!")
             flash('Login successful. Please connect a music platform.', 'success')
             return redirect(url_for('connect'))
         else:
@@ -456,7 +519,7 @@ def view_user_profile(username):
         recently_played_tracks = json.loads(user_profile['recently_played_tracks']) if user_profile['recently_played_tracks'] else []
         favorite_movies = json.loads(user_profile['favorite_movies']) if user_profile['favorite_movies'] else []
         recently_watched = json.loads(user_profile['recently_watched']) if user_profile['recently_watched'] else []
-        ratings = json.loads(user_profile['reviews']) if user_profile['reviews'] else []
+        ratings = json.loads(user_profile['ratings']) if user_profile['ratings'] else []
 
         badges = []  # Placeholder for badges
 
@@ -472,7 +535,6 @@ def view_user_profile(username):
         flash('User not found.', 'danger')
         return redirect(url_for('find_friend'))
 
-
 @app.route('/find_friend')
 def find_friend():
     if 'username' not in session:
@@ -481,24 +543,30 @@ def find_friend():
 
     username = session['username']
     conn = get_db_connection()
-    friends = view_friends(conn, username)
-    friend_requests = view_friend_requests(conn, username)
+    user_id = get_user_id_by_username(conn, username)
+    friends = get_friends(conn, user_id)
+    friend_requests = get_pending_friend_requests(conn, user_id)
     conn.close()
 
-    return render_template('find_friend.html', username=username, friends=friends, friend_requests=friend_requests)
+    friends_list = [{'username': friend['username']} for friend in friends]
+    friend_requests_list = [{'id': request['id'], 'username': request['username'], 'sender_id': request['sender_id']} for request in friend_requests]
+
+    return render_template('find_friend.html', username=username, friends=friends_list, friend_requests=friend_requests_list)
 
 
-@app.route('/view_friends', methods=['GET'])
-def view_friends_route():
+@app.route('/view_friend_requests')
+def view_friend_requests_route():
     if 'username' not in session:
         return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
-
+    
     conn = get_db_connection()
     user_id = get_user_id_by_username(conn, session['username'])
-    friends = get_friends(conn, user_id)
+    friend_requests = get_pending_friend_requests(conn, user_id)
     conn.close()
-
-    return jsonify({'status': 'success', 'friends': [{'id': friend['id'], 'username': friend['username']} for friend in friends]})
+    
+    friend_requests_dicts = [{'id': r['id'], 'username': r['username'], 'sender_id': r['sender_id']} for r in friend_requests]
+    
+    return jsonify({'status': 'success', 'requests': friend_requests_dicts})
 
 @app.route('/search_friends', methods=['GET'])
 def search_friends():
@@ -515,17 +583,6 @@ def search_friends():
     results = [{'username': user[0]} for user in users if user[0] != session.get('username')]
     return jsonify(results)
 
-@app.route('/view_friend_requests')
-def view_friend_requests_route():
-    if 'username' not in session:
-        return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
-    
-    conn = get_db_connection()
-    friend_requests = view_friend_requests(conn, session['username'])
-    conn.close()
-    
-    return jsonify({'status': 'success', 'requests': friend_requests})
-
 @app.route('/accept_friend_request', methods=['POST'])
 def accept_friend_request_route():
     if 'username' not in session:
@@ -535,10 +592,25 @@ def accept_friend_request_route():
     request_id = data.get('request_id')
     
     conn = get_db_connection()
-    accept_friend_request(conn, session['username'], request_id)
-    conn.close()
+    user_id = get_user_id_by_username(conn, session['username'])
     
-    return jsonify({'status': 'success', 'message': 'Friend request accepted'})
+    # Fetch the sender_id from the friend_requests table
+    cursor = conn.cursor()
+    cursor.execute('SELECT sender_id FROM friend_requests WHERE id = ? AND receiver_id = ?', (request_id, user_id))
+    result = cursor.fetchone()
+    
+    if not result:
+        conn.close()
+        return jsonify({'error': 'Friend request not found'}), 404
+    
+    sender_id = result[0]
+    
+    if accept_friend_request(conn, request_id, user_id, sender_id):
+        conn.close()
+        return jsonify({'message': 'Friend request accepted'}), 200
+    else:
+        conn.close()
+        return jsonify({'error': 'Failed to accept friend request'}), 400
 
 @app.route('/send_request', methods=['POST'])
 def send_request():
@@ -550,7 +622,9 @@ def send_request():
     receiver_username = data.get('username')
 
     conn = get_db_connection()
-    success = send_friend_request(conn, sender_username, receiver_username)
+    sender_id = get_user_id_by_username(conn, sender_username)
+    receiver_id = get_user_id_by_username(conn, receiver_username)
+    success = send_friend_request(conn, sender_id, receiver_id)
     conn.close()
 
     if success:
@@ -559,7 +633,6 @@ def send_request():
         return jsonify({'error': 'Failed to send friend request'}), 400
     
 #messaging
-
 @app.route('/get_messages/<int:friend_id>', methods=['GET'])
 def get_messages_route(friend_id):
     if 'username' not in session:
@@ -572,6 +645,7 @@ def get_messages_route(friend_id):
 
     return jsonify({'messages': messages}), 200
 
+
 @socketio.on('send_message')
 def handle_message(data):
     print("Received message:", data)
@@ -580,7 +654,6 @@ def handle_message(data):
     content = data['message']
     room = data['room']
 
-    # Save message to database
     conn = get_db_connection()
     sender_id = get_user_id_by_username(conn, sender)
     receiver_id = get_user_id_by_username(conn, receiver)
@@ -590,7 +663,8 @@ def handle_message(data):
     if message_id:
         emit('new_message', {
             'id': message_id,
-            'sender': sender,
+            'sender_id': sender_id,
+            'receiver_id': receiver_id,
             'content': content,
             'timestamp': datetime.now().isoformat()
         }, room=room)
@@ -786,8 +860,6 @@ def get_movie_ratings(user_id):
 
 
 
-
-
 @app.route('/collab')
 def collab():
     return render_template('collab.html')
@@ -796,6 +868,22 @@ def collab():
 def game():
     return render_template('game.html')
 
+# for the notification
+@app.route('/api/notifications')
+def get_notifications():
+    if 'username' not in session:
+        return jsonify([])
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT message, created_at FROM notifications WHERE user_id = (SELECT id FROM users WHERE username = ?) AND is_read = 0",
+        (session['username'],)
+    )
+    notifications = cursor.fetchall()
+    conn.close()
+
+    return jsonify([{"message": row["message"], "created_at": row["created_at"]} for row in notifications])
 
 def ensure_token_validity(token_info):
     """
@@ -805,6 +893,25 @@ def ensure_token_validity(token_info):
         token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
         session['token_info'] = token_info
     return token_info
+
+@app.route('/mark_notification_read', methods=['POST'])
+def mark_notification_read():
+    if 'username' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    notification_id = request.json.get('notification_id')
+    if not notification_id:
+        return jsonify({"error": "Bad Request"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = (SELECT id FROM users WHERE username = ?)",
+        (notification_id, session['username'])
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
 
 def fetch_spotify_data(sp):
     favorite_music = []
@@ -840,4 +947,4 @@ def fetch_spotify_data(sp):
     return favorite_music, recently_played_tracks
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, port=8080)
+    app.run(debug=True, port=8080)

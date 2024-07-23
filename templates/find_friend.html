@@ -48,7 +48,7 @@
                         <h3>Friends</h3>
                         <ul id="friends-list" class="user-list">
                             {% for friend in friends %}
-                                <li class="user-item"><a href="{{ url_for('view_user_profile', username=friend) }}">@{{ friend }}</a></li>
+                                <li class="user-item"><a href="{{ url_for('view_user_profile', username=friend['username']) }}">@{{ friend['username'] }}</a></li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -69,21 +69,27 @@
                         <ul id="friend-requests-list" class="user-list">
                             {% for request in friend_requests %}
                                 <li>
-                                    {{ request.sender_username }}
-                                    <button class="button accept-request-button" data-request-id="{{ request.id }}">Accept</button>
-                                    <button class="button reject-request-button" data-request-id="{{ request.id }}">Reject</button>
+                                    {{ request['username'] }}
+                                    <button class="button accept-request-button" data-request-id="{{ request['id'] }}">Accept</button>
+                                    <button class="button reject-request-button" data-request-id="{{ request['id'] }}">Reject</button>
                                 </li>
                             {% endfor %}
                         </ul>
-                    </div>
+                    </div>                    
                     <div class="bento-item large">
                         <h2>Real-Time Messaging</h2>
                         <div id="messagingContent">
-                            <div id="friendsList">
+                            <div id="friendsList" class="friends-list">
                                 <h3>Your Friends</h3>
-                                <ul id="friendsForMessaging"></ul>
+                                <ul id="friendsForMessaging" class="user-list">
+                                    {% for friend in friends %}
+                                        <li class="user-item friend-item" data-friend-id="{{ friend['id'] }}">
+                                            <a href="#">@{{ friend['username'] }}</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
                             </div>
-                            <div id="chatWindow" style="display: none;">
+                            <div id="chatWindow" class="chat-window" style="display: none;">
                                 <h3 id="currentChatFriend"></h3>
                                 <div id="messagesList" class="messages-container"></div>
                                 <div class="input-container">
@@ -93,7 +99,7 @@
                                 <button id="backToFriendsBtn">Back to Friends</button>
                             </div>
                         </div>
-                    </div>
+                    </div>                    
                     <div class="bento-item large">
                         <h2>Search For Friends</h2>
                         <div id="searchFriendsContent">
@@ -112,48 +118,114 @@
     <script src="{{ url_for('static', filename='js/find_friend.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-        });
-        // Update user items to include data-username attribute
-    function renderSearchResults(data) {
-        const searchResults = document.getElementById('searchResults');
-        searchResults.innerHTML = '';
-        data.forEach(user => {
-            const userItem = document.createElement('div');
-            userItem.classList.add('user-item');
-            userItem.setAttribute('data-username', user.username); // Add data-username attribute
-            userItem.innerHTML = `
-                <span>${user.username}</span>
-                <button class="add-friend-button" data-username="${user.username}">Add Friend</button>
-            `;
-            searchResults.appendChild(userItem);
+        const socket = io();
+        const friendsList = document.getElementById('friendsForMessaging');
+        const chatWindow = document.getElementById('chatWindow');
+        const messagesList = document.getElementById('messagesList');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const backToFriendsBtn = document.getElementById('backToFriendsBtn');
+        let currentRoom = null;
+        let currentFriendId = null;
+
+        function loadMessages(friendId) {
+            fetch(`/get_messages/${friendId}`)
+                .then(response => response.json())
+                .then(data => {
+                    messagesList.innerHTML = '';
+                    data.messages.forEach(message => {
+                        const messageItem = document.createElement('div');
+                        messageItem.classList.add('message-item');
+                        messageItem.classList.add(message.sender_id == currentFriendId ? 'received' : 'sent');
+                        messageItem.innerHTML = `
+                            <div class="message-content">${message.content}</div>
+                            <div class="timestamp">${new Date(message.timestamp).toLocaleString()}</div>
+                        `;
+                        messagesList.appendChild(messageItem);
+                    });
+                });
+        }
+
+        friendsList.addEventListener('click', function(event) {
+            const friendItem = event.target.closest('.friend-item');
+            if (friendItem) {
+                currentFriendId = friendItem.dataset.friendId;
+                currentRoom = `room_${currentFriendId}`;
+                socket.emit('join', { username: '{{ username }}', room: currentRoom });
+                chatWindow.style.display = 'block';
+                friendsList.style.display = 'none';
+                loadMessages(currentFriendId);
+            }
         });
 
-        document.querySelectorAll('.add-friend-button').forEach(button => {
-            button.addEventListener('click', (event) => {
-                event.stopPropagation();
-                const username = event.target.dataset.username;
-                fetch(`/send_request`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username })
-                }).then(response => {
-                    if (response.ok) {
-                        alert('Friend request sent!');
-                        event.target.disabled = true;
-                        event.target.innerText = 'Request Sent';
-                    } else {
-                        response.json().then(data => {
-                            alert(data.error || 'Failed to send friend request.');
-                        });
-                    }
+        sendMessageBtn.addEventListener('click', function() {
+            const message = messageInput.value;
+            socket.emit('send_message', {
+                sender: '{{ username }}',
+                receiver: currentFriendId,
+                message: message,
+                room: currentRoom
+            });
+            messageInput.value = '';
+        });
+
+        backToFriendsBtn.addEventListener('click', function() {
+            socket.emit('leave', { username: '{{ username }}', room: currentRoom });
+            chatWindow.style.display = 'none';
+            friendsList.style.display = 'block';
+        });
+
+        socket.on('new_message', function(data) {
+            const messageItem = document.createElement('div');
+            messageItem.classList.add('message-item');
+            messageItem.classList.add(data.sender_id == currentFriendId ? 'received' : 'sent');
+            messageItem.innerHTML = `
+                <div class="message-content">${data.content}</div>
+                <div class="timestamp">${new Date(data.timestamp).toLocaleString()}</div>
+            `;
+            messagesList.appendChild(messageItem);
+        });
+    });
+
+        function renderSearchResults(data) {
+            const searchResults = document.getElementById('searchResults');
+            searchResults.innerHTML = '';
+            data.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.classList.add('user-item');
+                userItem.setAttribute('data-username', user.username);
+                userItem.innerHTML = `
+                    <span>${user.username}</span>
+                    <button class="add-friend-button" data-username="${user.username}">Add Friend</button>
+                `;
+                searchResults.appendChild(userItem);
+            });
+
+            document.querySelectorAll('.add-friend-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const username = event.target.dataset.username;
+                    fetch(`/send_request`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username })
+                    }).then(response => {
+                        if (response.ok) {
+                            alert('Friend request sent!');
+                            event.target.disabled = true;
+                            event.target.innerText = 'Request Sent';
+                        } else {
+                            response.json().then(data => {
+                                alert(data.error || 'Failed to send friend request.');
+                            });
+                        }
+                    });
                 });
             });
-        });
-    }
-    </script>
-    <script>
+        }
+
         function acceptFriendRequest(requestId) {
             fetch(`/accept_friend_request`, {
                 method: 'POST',
@@ -174,5 +246,3 @@
 
 </body>
 </html>
-
-
