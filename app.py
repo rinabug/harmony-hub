@@ -709,7 +709,7 @@ def handle_message(data):
             'receiver_id': receiver_id,
             'sender_username': sender,
             'content': content,
-            'timestamp': datetime.datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat()
         }, room=room)
     else:
         emit('error', {'msg': 'Failed to send message'}, room=request.sid)
@@ -729,6 +729,7 @@ def on_leave(data):
     leave_room(room)
     emit('user_left', {'username': username}, room=room)
 
+#end of messaging
 
 @app.route('/user/<username>')
 def user_profile(username):
