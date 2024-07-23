@@ -14,7 +14,7 @@ from backend.user_auth import (
     is_valid_email, is_valid_password, set_reset_token, get_user_by_reset_token, reset_password, 
     alter_profiles_table, get_user_id_by_username, get_pending_friend_requests, get_friends, 
     send_friend_request, accept_friend_request, reject_friend_request, send_message, 
-    get_messages, mark_messages_as_read
+    get_messages, mark_messages_as_read, send_playlist_request
 )
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
@@ -967,5 +967,54 @@ def fetch_spotify_data(sp):
 
     return favorite_music, recently_played_tracks
 
+@app.route('/collab_input', methods=['POST','GET'])
+def collab_input():
+    render_template('collab_input.html')
+
+@app.route('/create_collab', methods=['POST','GET'])
+def create_collab():
+    sp = Spotify(auth_manager=sp_oauth)
+    user_id = sp.current_user()['id']
+    # Create a collaborative playlist
+    playlist_description = "A new collaborative playlist"
+    new_name = request.form['playlist_name']
+    sp.user_playlist_create(user_id,
+                            name=new_name,
+                            public=True,
+                            collaborative=True,
+                            description=playlist_description)
+    return redirect(url_for('collab'))
+
+
+@app.route('/request_playlist_input')
+def request_playlist_input():
+    return render_template('request_playlist_input.html')
+
+@app.route('/join_playlist', methods=['POST','GET'])
+def join_playlist():
+    conn = get_db_connection()
+    sender_username= request.form['sender_username']
+    receiver_username = request.form['receiver_username']
+    playlist_id = request.form['playlist_id']
+    sp = Spotify(auth_manager=sp_oauth)
+    sp.current_user_follow_playlist(playlist_id)
+    return redirect(url_for('collab'))
+    # if not sender_username:
+    #     conn.close()
+    #     return jsonify({'error': 'User not found'}), 404
+    
+    # try:
+    #     success = send_playlist_request(conn, sender_username, receiver_username, playlist_id)
+    #     conn.close()
+        
+    #     if success:
+    #         return jsonify({'message': 'Playlist request sent'}), 200
+    #     else:
+    #         return jsonify({'error': 'Failed to send Playlist request'}), 400
+    # except Exception as e:
+    #     conn.close()
+    #     print(f"Error sending friend request: {str(e)}")
+    #     return jsonify({'error': 'An unexpected error occurred'}), 500
+  
 if __name__ == '__main__':
     app.run(debug=True, port=8080)

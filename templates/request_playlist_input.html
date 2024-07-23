@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Button Navigation</title>
+</head>
+
+<body>
+<form action="{{ url_for('join_playlist') }}" method="POST">
+  <label for="reciever_username">Friend Username</label>
+  <input type="text" id="receiver_username" name="receiver_username" required>
+  <label for="playlist_id">Playlist_Id(GOTTEN FROM PROFILE)</label>
+  <input type="text" id="playlist_id" name="playlist_id" required>
+  <input type="submit" value="Request Access">
+</form>
+</body>

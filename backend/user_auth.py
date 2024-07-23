@@ -72,6 +72,18 @@ def create_tables():
         FOREIGN KEY (sender_id) REFERENCES users (id),
         FOREIGN KEY (receiver_id) REFERENCES users (id)
     );
+    CREATE TABLE IF NOT EXISTS playlists (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        playlists TEXT
+    );
+    CREATE TABLE IF NOT EXISTS playlist_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_username TEXT,
+    receiver_username TEXT,
+    playlist_id TEXT,
+    status TEXT CHECK(status IN ('pending', 'accepted', 'rejected'))
+    )
     ''')
     conn.commit()
     conn.close()
@@ -272,3 +284,60 @@ def mark_messages_as_read(conn, user_id, friend_id):
         return True
     except sqlite3.Error:
         return False
+    
+
+# ##Playlist Collab Stuff###################
+    
+def send_playlist_request(conn, sender_username, receiver_username, playlist_id):
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+        INSERT INTO playlist_requests (sender_username, receiver_username, playlist_id, status)
+        VALUES (?, ?, ?, 'pending')
+        ''', (sender_username, receiver_username, playlist_id))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+
+def accept_playlist_request(conn, sender_username, reciever_username, playlist_id):
+    cursor = conn.cursor()
+    try:
+        # Update the friend request status
+        cursor.execute('''
+        UPDATE playlist_requests
+        SET status = 'accepted'
+        WHERE sender_username = ? AND receiver_username = ? AND playlist_id = ?
+        ''', (sender_username, reciever_username, playlist_id))
+        
+        # Add entries to the friends table
+        cursor.execute('''
+        INSERT INTO playlists (sender_username, playlist_id)
+        VALUES (?, ?)
+        ''', (sender_username, playlist_id))
+        
+        conn.commit()
+        return True
+    except sqlite3.Error:
+        conn.rollback()
+        return False
+
+def reject_playlist_request(conn,sender_username, reciever_username, playlist_id):
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+        UPDATE playlist_requests
+        SET status = 'rejected'
+        WHERE sender_username = ? AND receiver_username = ? AND playlist_id = ?
+        ''', (sender_username, reciever_username, playlist_id))
+        conn.commit()
+        return True
+    except sqlite3.Error:
+        return False
+
+def get_pending_playlist_requests(conn, username):
+    cursor = conn.cursor()
+    cursor.execute('''
+    SELECT * FROM playlists WHERE username = ? and status = 'pending'
+    ''', (username,))
+    return cursor.fetchall()
