@@ -1057,3 +1057,34 @@ audio {
     }
 }
 
+.messages-container {
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+.message {
+    margin-bottom: 10px;
+    padding: 5px;
+    border-radius: 5px;
+}
+.sent {
+    background-color: #e6f2ff;
+    text-align: right;
+}
+.received {
+    background-color: #f2f2f2;
+}
+.sender {
+    font-weight: bold;
+}
+.timestamp {
+    font-size: 0.8em;
+    color: #888;
+}
+
+#messageInput {
+    flex-grow: 1;
+    margin-right: 10px;
+}

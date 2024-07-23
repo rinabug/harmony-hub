@@ -65,9 +65,33 @@
                         </div>
                     </div>
                     <div class="bento-item small">
+                        <h2>Friend Requests</h2>
+                        <ul id="friend-requests-list" class="user-list">
+                            {% for request in friend_requests %}
+                                <li>
+                                    {{ request.sender_username }}
+                                    <button class="button accept-request-button" data-request-id="{{ request.id }}">Accept</button>
+                                    <button class="button reject-request-button" data-request-id="{{ request.id }}">Reject</button>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="bento-item large">
                         <h2>Real-Time Messaging</h2>
                         <div id="messagingContent">
-                            <!-- Real-time messaging content will be loaded dynamically -->
+                            <div id="friendsList">
+                                <h3>Your Friends</h3>
+                                <ul id="friendsForMessaging"></ul>
+                            </div>
+                            <div id="chatWindow" style="display: none;">
+                                <h3 id="currentChatFriend"></h3>
+                                <div id="messagesList" class="messages-container"></div>
+                                <div class="input-container">
+                                    <input type="text" id="messageInput" placeholder="Type your message...">
+                                    <button id="sendMessageBtn">Send</button>
+                                </div>
+                                <button id="backToFriendsBtn">Back to Friends</button>
+                            </div>
                         </div>
                     </div>
                     <div class="bento-item large">
@@ -79,37 +103,15 @@
                             <div id="searchResults"></div>
                         </div>
                     </div>
-                    <div class="bento-item small">
-                        <h2>Friend Requests</h2>
-                        <ul id="friend-requests-list" class="user-list">
-                            {% for request in friend_requests %}
-                                <li>
-                                    {{ request.sender_username }}
-                                    <button class="button add-friend-button" onclick="acceptFriendRequest({{ request.id }})">Accept</button>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
                 </div>
             </section>
         </main>
     </div>
 
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='js/find_friend.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const menuToggle = document.getElementById('menu-toggle');
-            const sidebar = document.getElementById('sidebar');
-            const mainContainer = document.getElementById('main-container');
-            const mainContent = document.getElementById('main-content');
-            const header = document.querySelector('header');
-
-            menuToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('open');
-                mainContainer.classList.toggle('collapsed');
-                mainContent.classList.toggle('expanded');
-                header.classList.toggle('expanded');
-            });
         });
         // Update user items to include data-username attribute
     function renderSearchResults(data) {
@@ -169,6 +171,7 @@
             });
         }
     </script>
+
 </body>
 </html>
 

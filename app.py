@@ -9,17 +9,26 @@ import hashlib
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.cache_handler import FlaskSessionCacheHandler
-from backend.user_auth import create_tables, get_db_connection, register_user, login_user, update_profile, get_profile, is_valid_email, is_valid_password, set_reset_token, get_user_by_reset_token, reset_password, alter_profiles_table
+from backend.user_auth import create_tables, get_db_connection, register_user, login_user, update_profile, get_profile, is_valid_email, is_valid_password, set_reset_token, get_user_by_reset_token, reset_password, alter_profiles_table, get_user_id_by_username, get_pending_friend_requests, get_friends, send_friend_request, accept_friend_request, reject_friend_request
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
 from backend.recent_listens import get_recently_played_tracks
 from backend.friend_system import view_friends, view_friend_requests, accept_friend_request, send_friend_request, create_friend_tables, alter_friends_table, initialize_friend_system
 from backend.tmdb_recommendations import get_movie_recommendations_from_tmdb
+from backend.spotify_utils import extract_top_genres, genre_mapping
+
+#messaging
+
+from flask_socketio import SocketIO, emit, join_room, leave_room
+from backend.user_auth import send_message, get_messages, mark_messages_as_read
+from datetime import datetime
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB max upload size
+socketio = SocketIO(app, cors_allowed_origins="*") #messaging
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -123,12 +132,39 @@ def index():
         # Fetch recently played tracks
         recently_played_tracks = get_recently_played_tracks(sp)
 
+        #movie rec based on listening history
+        top_genres = extract_top_genres(sp)
+        movie_genres = [genre_mapping.get(genre, 'Drama') for genre in top_genres]
+        if movie_genres:
+            movie_recommendations = get_movie_recommendations_from_tmdb(movie_genres[0], "PG-13", "2021-present")
+        else:
+            movie_recommendations = []
+
     except Exception as e:
         print(f"Error fetching Spotify playlists: {e}")
         flash("There was an error connecting to Spotify. Please try logging in again.")
         return redirect(url_for('loginSpotify'))
 
-    return render_template('index.html', username=username, playlists_info=playlists_info, top_charts_info=top_charts_info, music_recommendations=music_recommendations, recently_played_tracks=recently_played_tracks)
+    return render_template('index.html', 
+                           username=username, 
+                           playlists_info=playlists_info, 
+                           top_charts_info=top_charts_info, 
+                           music_recommendations=music_recommendations, 
+                           recently_played_tracks=recently_played_tracks,
+                           movie_recommendations=movie_recommendations)
+    
+def generate_movie_recommendations(favorite_movies, recently_watched):
+    # For simplicity, we use genres from favorite and recently watched movies
+    genres = set()
+    for movie in favorite_movies + recently_watched:
+        if 'genre_ids' in movie:
+            genres.update(movie['genre_ids'])
+
+    # Use the first genre as an example, you might want to handle this better in a real application
+    if genres:
+        genre = list(genres)[0]
+        return get_movie_recommendations_from_tmdb(genre, "PG-13", "2021-present")
+    return []
 
 @app.route('/logout')
 def logout():
@@ -452,16 +488,17 @@ def find_friend():
     return render_template('find_friend.html', username=username, friends=friends, friend_requests=friend_requests)
 
 
-@app.route('/view_friends')
+@app.route('/view_friends', methods=['GET'])
 def view_friends_route():
     if 'username' not in session:
         return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
-    
+
     conn = get_db_connection()
-    friends = view_friends(conn, session['username'])
+    user_id = get_user_id_by_username(conn, session['username'])
+    friends = get_friends(conn, user_id)
     conn.close()
-    
-    return jsonify({'status': 'success', 'friends': friends})
+
+    return jsonify({'status': 'success', 'friends': [{'id': friend['id'], 'username': friend['username']} for friend in friends]})
 
 @app.route('/search_friends', methods=['GET'])
 def search_friends():
@@ -520,6 +557,61 @@ def send_request():
         return jsonify({'success': True})
     else:
         return jsonify({'error': 'Failed to send friend request'}), 400
+    
+#messaging
+
+@app.route('/get_messages/<int:friend_id>', methods=['GET'])
+def get_messages_route(friend_id):
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    conn = get_db_connection()
+    user_id = get_user_id_by_username(conn, session['username'])
+    messages = get_messages(conn, user_id, friend_id)
+    conn.close()
+
+    return jsonify({'messages': messages}), 200
+
+@socketio.on('send_message')
+def handle_message(data):
+    print("Received message:", data)
+    sender = data['sender']
+    receiver = data['receiver']
+    content = data['message']
+    room = data['room']
+
+    # Save message to database
+    conn = get_db_connection()
+    sender_id = get_user_id_by_username(conn, sender)
+    receiver_id = get_user_id_by_username(conn, receiver)
+    message_id = send_message(conn, sender_id, receiver_id, content)
+    conn.close()
+
+    if message_id:
+        emit('new_message', {
+            'id': message_id,
+            'sender': sender,
+            'content': content,
+            'timestamp': datetime.now().isoformat()
+        }, room=room)
+        print(f"Message sent to room {room}")
+    else:
+        emit('error', {'msg': 'Failed to send message'}, room=request.sid)
+
+@socketio.on('join')
+def on_join(data):
+    username = data['username']
+    room = data['room']
+    join_room(room)
+    emit('user_joined', {'username': username}, room=room)
+
+@socketio.on('leave')
+def on_leave(data):
+    username = data['username']
+    room = data['room']
+    leave_room(room)
+    emit('user_left', {'username': username}, room=room)
+
 
 @app.route('/user/<username>')
 def user_profile(username):
@@ -748,6 +840,4 @@ def fetch_spotify_data(sp):
     return favorite_music, recently_played_tracks
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8080)
-
-
+    socketio.run(app, debug=True, port=8080)
