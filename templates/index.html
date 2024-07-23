@@ -111,57 +111,31 @@
                         </div>
                     </div>
                     <div class="bento-item small">
-                        <h2>Recently Played Tracks</h2>
-                        <div id="recentlyPlayedContent">
-                            {% if recently_played_tracks %}
-                                <div class="recently-played-tracks">
-                                    {% for track in recently_played_tracks %}
-                                        <div class="music-item">
-                                            <img src="{{ track.album_image_url }}" alt="{{ track.album }}" class="album-image">
-                                            <h3>{{ track.name }}</h3>
-                                            <p>Artist: {{ track.artist }}</p>
-                                            <p>Album: {{ track.album }}</p>
-                                            {% if track.preview_url %}
-                                                <audio controls>
-                                                    <source src="{{ track.preview_url }}" type="audio/mpeg">
-                                                    Your browser does not support the audio element.
-                                                </audio>
+                        <h2>Movie Recommendations</h2>
+                        <div id="movieRecommendations">
+                            {% if movie_recommendations %}
+                                <div class="movie-recommendations">
+                                    {% for movie in movie_recommendations %}
+                                        <div class="movie-item">
+                                            {% if movie.trailer_url %}
+                                                <iframe width="560" height="315" src="{{ movie.trailer_url }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                                             {% endif %}
-                                            <a href="{{ track.external_url }}" target="_blank" class="spotify-link">Open in Spotify</a>
+                                            <h3>{{ movie.title }}</h3>
+                                            <p>{{ movie.overview }}</p>
+                                            <img src="{{ movie.poster_path }}" alt="{{ movie.title }}" class="album-image">
+                                            {% if movie.watch_providers %}
+                                                <p><strong>Available on:</strong> {{ movie.watch_providers | join(', ') }}</p>
+                                            {% else %}
+                                                <p><strong>Streaming Availability:</strong> Not available</p>
+                                            {% endif %}
                                         </div>
                                     {% endfor %}
                                 </div>
                             {% else %}
-                                <p>No recently played tracks available. Try listening to more music!</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="bento-item small">
-                        <h2>Movie and Show Recommendations</h2>
-                        <div id="movieRecommendations">
-                            <!-- Movie recommendations content will be dynamically loaded -->
-                            {% if movie_recommendations %}
-                                <ul>
-                                {% for movie in movie_recommendations %}
-                                    <li>
-                                        <h3>{{ movie.title }}</h3>
-                                        <p>Director: {{ movie.director }}</p>
-                                        <p>Streaming on: {{ movie.streaming_service }}</p>
-                                        <a href="{{ movie.external_url }}" target="_blank">More Info</a>
-                                    </li>
-                                {% endfor %}
-                                </ul>
-                            {% else %}
                                 <p>No movie recommendations available. Try watching more movies!</p>
                             {% endif %}
                         </div>
-                    </div>
-                    <div class="bento-item small">
-                        <h2>Recently Watched</h2>
-                        <div id="recentlyWatchedContent">
-                            <!--Recently watched content here-->
-                        </div>
-                    </div>
+                    </div>                    
                 </div>
             </section>
 
@@ -184,6 +158,7 @@
                 header.classList.toggle('expanded');
             });
         });
+        
     </script>
 </body>
 </html>
