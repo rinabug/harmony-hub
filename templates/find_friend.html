@@ -125,6 +125,18 @@
         const messageInput = document.getElementById('messageInput');
         const sendMessageBtn = document.getElementById('sendMessageBtn');
         const backToFriendsBtn = document.getElementById('backToFriendsBtn');
+        const friendRequestsList = document.getElementById('friend-requests-list');
+
+                //added below
+        friendRequestsList.addEventListener('click', function(event) {
+            if (event.target.classList.contains('accept-request-button')) {
+            const requestId = event.target.dataset.requestId;
+            acceptFriendRequest(requestId);
+            } else if (event.target.classList.contains('reject-request-button')) {
+                const requestId = event.target.dataset.requestId;
+                rejectFriendRequest(requestId);
+            }
+        });
         let currentRoom = null;
         let currentFriendId = null;
 
@@ -242,6 +254,22 @@
                 }
             });
         }
+        function rejectFriendRequest(requestId) {
+        fetch(`/reject_friend_request`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ request_id: requestId })
+        }).then(response => {
+            if (response.ok) {
+                alert('Friend request rejected!');
+                location.reload();
+            } else {
+                alert('Failed to reject friend request.');
+            }
+        });
+    }
     </script>
 
 </body>
