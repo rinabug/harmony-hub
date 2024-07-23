@@ -159,7 +159,6 @@ multidict==6.0.2
 multipledispatch==0.6.0
 mypy==0.961
 mypy-extensions==0.4.3
-navigator-updater==0.2.1
 nbclassic==0.3.7
 nbclient==0.5.13
 nbconvert==6.4.4
