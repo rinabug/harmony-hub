@@ -55,10 +55,11 @@ def get_friends_leaderboard(conn, username):
     return [{"username": row[0], "score": row[1]} for row in cursor.fetchall()]
 
 def generate_trivia_question(artists, asked_questions=[]):
-    artist = random.choice(artists) if artists else None
-    prompt = f"Generate a music trivia question "
-    if artist:
-        prompt += f"about the artist {artist} "
+    if not artists:
+        return None
+
+    artist = random.choice(artists)
+    prompt = f"Generate a music trivia question about the artist {artist} "
     prompt += "with four multiple-choice options. Format the response as: Question\\nA) Option\\nB) Option\\nC) Option\\nD) Option\\nCorrect Answer: Letter"
 
     try:
@@ -75,7 +76,7 @@ def generate_trivia_question(artists, asked_questions=[]):
         match = re.match(pattern, question_data, re.DOTALL)
 
         if match:
-            question = match.group(1).strip().replace('\n', '').replace(':', ''),
+            question = match.group(1).strip().replace('\n', '').replace(':', '')
             options = {
                 'A': match.group(2).strip().replace('\n', '').replace(':', ''),
                 'B': match.group(3).strip().replace('\n', '').replace(':', ''),
@@ -88,7 +89,7 @@ def generate_trivia_question(artists, asked_questions=[]):
             if question in asked_questions:
                 return generate_trivia_question(artists, asked_questions)  # Recursive call to get a new question
             else:
-                return {'question': question, 'options': {key: value.replace('\\n', '') for key, value in options.items()}, 'correct_answer': correct_answer}
+                return {'question': question, 'options': options, 'correct_answer': correct_answer}
 
         else:
             print("Error. Unable to parse the question data.")
@@ -99,25 +100,31 @@ def generate_trivia_question(artists, asked_questions=[]):
         print(f"Error generating trivia question: {e}")
         return None
 
-def play_trivia(conn, username):
+def play_trivia(conn, username, sp):
     print("\nWelcome to Trivia!")
     score = 0
     num_questions = 5
 
-    for _ in range(num_questions):
-        # In real implementation, will use user's listening history
-        question_data = generate_trivia_question("Billie Eilish")
-        
-        print(question_data['question'])
-        for key, value in question_data['options'].items():
-            print(f"{key}) {value}")
-        user_answer = input("Your answer (A/B/C/D): ").upper()
+    # Fetch user's top artists
+    top_artists = sp.current_user_top_artists(limit=10, time_range='medium_term')
+    artist_names = [artist['name'] for artist in top_artists['items']]
 
-        if user_answer == question_data['correct_answer']:
-            print("Correct!")
-            score += 1
+    for _ in range(num_questions):
+        question_data = generate_trivia_question(artist_names)
+        
+        if question_data:
+            print(question_data['question'])
+            for key, value in question_data['options'].items():
+                print(f"{key}) {value}")
+            user_answer = input("Your answer (A/B/C/D): ").upper()
+
+            if user_answer == question_data['correct_answer']:
+                print("Correct!")
+                score += 1
+            else:
+                print(f"Sorry, the correct answer was {question_data['correct_answer']}")
         else:
-            print(f"Sorry, the correct answer was {question_data['correct_answer']}")
+            print("Failed to generate a question. Skipping.")
 
     print(f"\nYou scored {score} out of {num_questions}")
     update_score(conn, username, score)
