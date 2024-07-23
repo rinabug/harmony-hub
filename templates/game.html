@@ -58,22 +58,10 @@
                     <div class="bento-item medium">
                         <h2>Trivia</h2>
                         <div id="triviaContent">
-                            {% if question %}
-                                <p id="question">{{ question }}</p>
-                                <div id="options">
-                                    {% if options %}
-                                        {% for letter, option in options.items() %}
-                                            <button class="trivia-option button" data-answer="{{ letter }}">{{ letter }}) {{ option }}</button>
-                                        {% endfor %}
-                                    {% else %}
-                                        <p>No options available.</p>
-                                    {% endif %}
-                                </div>
-                                <p id="result"></p>
-                                <button id="nextQuestion" class="button" style="display: none;">Next Question</button>
-                            {% else %}
-                                <p>No trivia question available.</p>
-                            {% endif %}
+                            <p id="question"></p>
+                            <div id="options"></div>
+                            <p id="result"></p>
+                            <button id="nextQuestion" class="button" style="display: none;">Next Question</button>
                         </div>
                     </div>
                     <div class="bento-item large">
@@ -87,7 +75,7 @@
         </main>
     </div>
 
-    <script src="{{ url_for('static', filename='js/games.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const menuToggle = document.getElementById('menu-toggle');
