@@ -44,7 +44,7 @@ client_id = '908db28b7d8e4d03888632068918bff1'
 client_secret = '92919a8126964ba5b4da358d97c729ef'
 redirect_uri = 'http://localhost:8080/callback'
 
-scope = 'playlist-read-private,user-follow-read,user-top-read,user-read-recently-played'
+scope = 'playlist-read-private,user-follow-read,user-top-read,user-read-recently-played,user-library-modify' #added
 
 cache_handler = FlaskSessionCacheHandler(session)
 
@@ -1063,6 +1063,31 @@ def answer_trivia():
         result = {'status': 'incorrect', 'message': f"Wrong answer. The correct answer was {current_question['correct_answer']}.", 'correct_answer': current_question['correct_answer']}
 
     return jsonify(result)
+
+#add to liked songs
+
+@app.route('/add_to_liked_songs', methods=['POST'])
+def add_to_liked_songs():
+    if 'username' not in session:
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+    
+    if 'token_info' not in session:
+        return jsonify({'success': False, 'error': 'Spotify authentication required'}), 400
+    
+    token_info = session.get('token_info')
+    token_info = ensure_token_validity(token_info)  
+    sp = Spotify(auth=token_info['access_token'])
+    
+    track_id = request.json.get('track_id')
+    if not track_id:
+        return jsonify({'success': False, 'error': 'No track ID provided'}), 400
+    
+    try:
+        sp.current_user_saved_tracks_add([track_id])
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error adding track to liked songs: {e}")
+        return jsonify({'success': False, 'error': 'Failed to add track to liked songs'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
