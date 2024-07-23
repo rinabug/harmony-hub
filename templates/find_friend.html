@@ -90,13 +90,13 @@
                                 </ul>
                             </div>
                             <div id="chatWindow" class="chat-window" style="display: none;">
-                                <h3 id="currentChatFriend"></h3>
-                                <div id="messagesList" class="messages-container"></div>
-                                <div class="input-container">
-                                    <input type="text" id="messageInput" placeholder="Type your message...">
-                                    <button id="sendMessageBtn">Send</button>
-                                </div>
-                                <button id="backToFriendsBtn">Back to Friends</button>
+                <h3 id="currentChatFriend"></h3>
+                <div id="messagesList" class="messages-container"></div>
+                <div class="input-container">
+                    <input type="text" id="messageInput" placeholder="Type your message...">
+                    <button id="sendMessageBtn">Send</button>
+                </div>
+                <button id="backToFriendsBtn">Back to Friends</button>
                             </div>
                         </div>
                     </div>                    
@@ -141,22 +141,23 @@
         let currentFriendId = null;
 
         function loadMessages(friendId) {
-            fetch(`/get_messages/${friendId}`)
-                .then(response => response.json())
-                .then(data => {
-                    messagesList.innerHTML = '';
-                    data.messages.forEach(message => {
-                        const messageItem = document.createElement('div');
-                        messageItem.classList.add('message-item');
-                        messageItem.classList.add(message.sender_id == currentFriendId ? 'received' : 'sent');
-                        messageItem.innerHTML = `
-                            <div class="message-content">${message.content}</div>
-                            <div class="timestamp">${new Date(message.timestamp).toLocaleString()}</div>
-                        `;
-                        messagesList.appendChild(messageItem);
-                    });
-                });
-        }
+    fetch(`/get_messages/${friendId}`)
+        .then(response => response.json())
+        .then(data => {
+            messagesList.innerHTML = '';
+            data.messages.forEach(message => {
+                const messageItem = document.createElement('div');
+                messageItem.classList.add('message-item');
+                messageItem.classList.add(message.sender_id == currentFriendId ? 'received' : 'sent');
+                messageItem.innerHTML = `
+                    <div class="sender">${message.sender_username}</div>
+                    <div class="message-content">${message.content}</div>
+                    <div class="timestamp">${new Date(message.timestamp).toLocaleString()}</div>
+                `;
+                messagesList.appendChild(messageItem);
+            });
+        });
+}
 
         friendsList.addEventListener('click', function(event) {
             const friendItem = event.target.closest('.friend-item');
@@ -188,15 +189,16 @@
         });
 
         socket.on('new_message', function(data) {
-            const messageItem = document.createElement('div');
-            messageItem.classList.add('message-item');
-            messageItem.classList.add(data.sender_id == currentFriendId ? 'received' : 'sent');
-            messageItem.innerHTML = `
-                <div class="message-content">${data.content}</div>
-                <div class="timestamp">${new Date(data.timestamp).toLocaleString()}</div>
-            `;
-            messagesList.appendChild(messageItem);
-        });
+        const messageItem = document.createElement('div');
+        messageItem.classList.add('message-item');
+        messageItem.classList.add(data.sender_id == currentFriendId ? 'received' : 'sent');
+        messageItem.innerHTML = `
+            <div class="sender">${data.sender_username}</div>
+            <div class="message-content">${data.content}</div>
+            <div class="timestamp">${new Date(data.timestamp).toLocaleString()}</div>
+        `;
+        messagesList.appendChild(messageItem);
+    });
     });
 
         function renderSearchResults(data) {
@@ -254,22 +256,7 @@
                 }
             });
         }
-        function rejectFriendRequest(requestId) {
-        fetch(`/reject_friend_request`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ request_id: requestId })
-        }).then(response => {
-            if (response.ok) {
-                alert('Friend request rejected!');
-                location.reload();
-            } else {
-                alert('Failed to reject friend request.');
-            }
-        });
-    }
+        
     </script>
 
 </body>
