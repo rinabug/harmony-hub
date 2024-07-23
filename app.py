@@ -26,7 +26,9 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 from datetime import datetime
 
 from backend.trivia import create_leaderboard_table, update_score, get_leaderboard, get_friends_leaderboard, generate_trivia_question
-
+import openai
+from openai import OpenAI
+from random import randint
 import random
 
 app = Flask(__name__)
@@ -1063,6 +1065,54 @@ def answer_trivia():
         result = {'status': 'incorrect', 'message': f"Wrong answer. The correct answer was {current_question['correct_answer']}.", 'correct_answer': current_question['correct_answer']}
 
     return jsonify(result)
+
+
+@app.route('/bacon_input', methods=['POST'])
+def bacon_input():
+    token_info = session.get('token_info')
+    token_info = ensure_token_validity(token_info)  # Ensure the token is valid
+    sp = Spotify(auth=token_info['access_token'])
+
+    songs = sp.current_user_recently_played()
+    songs_filt = [(song['track']['artists']) for song in songs['items']]
+    #songs_filt = [(song['artists']) for song in songs['items']['track']['artists']]
+    last_artist= list()
+    last_song_name=[(song['track']['name']) for song in songs['items']]
+    for artist in songs_filt:
+        for item in artist:
+            name= item["name"]
+            last_artist.append(name) #list of the names of the last 50 artists you listned to
+
+    OPENAI_API_KEY = os.getenv('OPENAI_KEY')
+    client = OpenAI(api_key=OPENAI_API_KEY)
+
+
+    def ask_api(prompt):
+    # Specify the model to use and the messages to send
+        completion = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": 'You are a straight forward examiner'},
+                {"role": "system", "content": prompt},
+            ]
+        )
+        return(completion.choices[0].message.content)
+    
+    index= randint(0,50)
+    prompt= (f'Using this artist {last_artist[index]},come up with just the name of another')
+    question=[last_artist[index], prompt]
+    prompt=(f'Given these 2 artists {question}, what is the shortest path to connect them to get from 1 to the other '
+            f'via artists who are connected by a song between, what is the path? ')
+    answer= ask_api(prompt)
+    attempt = request.form.get('answer')
+    if answer!= attempt:
+        return jsonify({'message': 'WRONG, your answer was {answer}'}), 200
+
+    return render_template('bacon_game.html', my_variable= question)
+
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
