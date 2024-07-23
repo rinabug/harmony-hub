@@ -25,6 +25,8 @@ from backend.spotify_utils import extract_top_genres, genre_mapping
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from datetime import datetime
 
+from backend.trivia import create_leaderboard_table, update_score, get_leaderboard, get_friends_leaderboard, generate_trivia_question
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
@@ -37,8 +39,8 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 load_dotenv()
 TMDB_API_KEY='9543dc934149c1e3c3e522690966c634'
 
-client_id = os.getenv('SPOTIFY_CLIENT_ID')
-client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
+client_id = '908db28b7d8e4d03888632068918bff1'
+client_secret = '92919a8126964ba5b4da358d97c729ef'
 redirect_uri = 'http://localhost:8080/callback'
 
 scope = 'playlist-read-private,user-follow-read,user-top-read,user-read-recently-played'
@@ -87,6 +89,7 @@ def initialize_database():
     conn = get_db_connection()
     create_tables()
     alter_profiles_table()
+    create_leaderboard_table(conn)
     conn.close()
 
 # Add this function to insert notifications into the database
@@ -607,9 +610,9 @@ def search_friends():
 @app.route('/accept_friend_request', methods=['POST'])
 def accept_friend_request_route():
     if 'username' not in session:
-        return jsonify({'status': 'error', 'message': 'Please log in.'}), 401
+        return jsonify({'error': 'Not logged in'}), 401
     
-    data = request.get_json()
+    data = request.json
     request_id = data.get('request_id')
     
     conn = get_db_connection()
@@ -632,6 +635,24 @@ def accept_friend_request_route():
     else:
         conn.close()
         return jsonify({'error': 'Failed to accept friend request'}), 400
+    
+@app.route('/reject_friend_request', methods=['POST'])
+def reject_friend_request_route():
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    data = request.json
+    request_id = data.get('request_id')
+    
+    conn = get_db_connection()
+    user_id = get_user_id_by_username(conn, session['username'])
+    
+    if reject_friend_request(conn, request_id, user_id):
+        conn.close()
+        return jsonify({'message': 'Friend request rejected'}), 200
+    else:
+        conn.close()
+        return jsonify({'error': 'Failed to reject friend request'}), 400
 
 @app.route('/send_request', methods=['POST'])
 def send_request():
@@ -669,7 +690,6 @@ def get_messages_route(friend_id):
 
 @socketio.on('send_message')
 def handle_message(data):
-    print("Received message:", data)
     sender = data['sender']
     receiver = data['receiver']
     content = data['message']
@@ -686,12 +706,13 @@ def handle_message(data):
             'id': message_id,
             'sender_id': sender_id,
             'receiver_id': receiver_id,
+            'sender_username': sender,
             'content': content,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.datetime.now().isoformat()
         }, room=room)
-        print(f"Message sent to room {room}")
     else:
         emit('error', {'msg': 'Failed to send message'}, room=request.sid)
+
 
 @socketio.on('join')
 def on_join(data):
@@ -966,6 +987,69 @@ def fetch_spotify_data(sp):
         print(f"Error fetching Spotify data: {e}")
 
     return favorite_music, recently_played_tracks
+
+#trivia
+@app.route('/get_global_leaderboard')
+def get_global_leaderboard_route():
+    conn = get_db_connection()
+    leaderboard = get_leaderboard(conn)
+    conn.close()
+    return jsonify(leaderboard)
+
+@app.route('/get_friends_leaderboard')
+def get_friends_leaderboard_route():
+    if 'username' not in session:
+        return jsonify([])
+    
+    conn = get_db_connection()
+    leaderboard = get_friends_leaderboard(conn, session['username'])
+    conn.close()
+    return jsonify(leaderboard)
+
+@app.route('/get_trivia_question')
+def get_trivia_question():
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    if 'token_info' not in session:
+        return jsonify({'error': 'Spotify authentication required'}), 400
+    
+    token_info = session.get('token_info')
+    sp = Spotify(auth=token_info['access_token'])
+    
+    try:
+        top_artists = sp.current_user_top_artists(limit=5, time_range='short_term')['items']
+        artist_names = [artist['name'] for artist in top_artists]
+        asked_questions = session.get('asked_questions', [])
+        question_data = generate_trivia_question(artist_names, asked_questions)
+        if question_data:
+            session['asked_questions'] = asked_questions + [question_data['question']]
+            session['current_question'] = question_data
+            return jsonify(question_data)
+        else:
+            return jsonify({'error': 'Failed to generate question'}), 500
+    except Exception as e:
+        print(f"Error generating trivia question: {e}")
+        return jsonify({'error': 'Error generating trivia question'}), 500
+
+@app.route('/answer_trivia', methods=['POST'])
+def answer_trivia():
+    if 'username' not in session or 'current_question' not in session:
+        return jsonify({'error': 'Invalid session'}), 400
+
+    data = request.get_json()
+    user_answer = data.get('answer')
+    current_question = session['current_question']
+
+    if user_answer == current_question['correct_answer']:
+        conn = get_db_connection()
+        update_score(conn, session['username'], 1)
+        conn.close()
+        result = {'status': 'correct', 'message': 'Correct answer!', 'correct_answer': current_question['correct_answer']}
+    else:
+        result = {'status': 'incorrect', 'message': f"Wrong answer. The correct answer was {current_question['correct_answer']}.", 'correct_answer': current_question['correct_answer']}
+
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
