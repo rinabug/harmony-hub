@@ -27,6 +27,7 @@ from datetime import datetime
 
 from backend.trivia import create_leaderboard_table, update_score, get_leaderboard, get_friends_leaderboard, generate_trivia_question
 
+import random
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(64)
@@ -1015,13 +1016,25 @@ def get_trivia_question():
         return jsonify({'error': 'Spotify authentication required'}), 400
     
     token_info = session.get('token_info')
+    token_info = ensure_token_validity(token_info)  # Ensure the token is valid
     sp = Spotify(auth=token_info['access_token'])
     
     try:
-        top_artists = sp.current_user_top_artists(limit=5, time_range='short_term')['items']
+        # Fetch user's top artists
+        top_artists = sp.current_user_top_artists(limit=10, time_range='medium_term')['items']
         artist_names = [artist['name'] for artist in top_artists]
+        
+        # Fetch user's recently played tracks for more variety
+        recent_tracks = sp.current_user_recently_played(limit=20)['items']
+        recent_artists = list(set([track['track']['artists'][0]['name'] for track in recent_tracks]))
+        
+        # Combine and shuffle the artists
+        all_artists = list(set(artist_names + recent_artists))
+        random.shuffle(all_artists)
+        
         asked_questions = session.get('asked_questions', [])
-        question_data = generate_trivia_question(artist_names, asked_questions)
+        question_data = generate_trivia_question(all_artists, asked_questions)
+        
         if question_data:
             session['asked_questions'] = asked_questions + [question_data['question']]
             session['current_question'] = question_data
