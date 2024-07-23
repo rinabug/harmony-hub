@@ -28,6 +28,8 @@ body {
     overflow-y: auto; /* Allow the main container to be scrollable */
     padding: 100px 20px 20px 20px;
     margin-top: 200px;
+    margin-left: 20px;
+    margin-right: 20px;
 }
 
 #main-container.collapsed {
@@ -1017,6 +1019,23 @@ audio {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    body {
+        display: block; /* Change display to block to stack elements vertically */
+        height: auto; /* Adjust height to auto */
+    }
+
+    header {
+        height: auto; /* Adjust header height to auto */
+        padding: 20px; /* Add padding for better spacing */
+        position: relative; /* Make header relative */
+        margin-bottom: 20px; /* Add margin-bottom to create space below header */
+    }
+
+    #main-container {
+        padding: 20px; /* Adjust padding */
+        margin-top: 0; /* Remove margin-top */
+    }
+
     .main-container > section {
         flex: 1 1 100%;
     }
@@ -1030,10 +1049,6 @@ audio {
     .friends-section,
     .badges-section {
         width: 100%;
-    }
-
-    #main-container {
-        grid-template-columns: 200px 1fr;
     }
 
     .sidebar nav ul {

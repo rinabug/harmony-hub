@@ -914,25 +914,6 @@ def ensure_token_validity(token_info):
         token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
         session['token_info'] = token_info
     return token_info
-@app.route('/api/notifications/mark_read', methods=['POST'])
-@app.route('/mark_notification_read', methods=['POST'])
-def mark_notification_read():
-    if 'username' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    notification_id = request.json.get('notification_id')
-    if not notification_id:
-        return jsonify({"error": "Bad Request"}), 400
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = (SELECT id FROM users WHERE username = ?)",
-        (notification_id, session['username'])
-    )
-    conn.commit()
-    conn.close()
-    return jsonify({"success": True})
 
 @app.route('/mark_notification_read', methods=['POST'])
 def mark_notification_read():

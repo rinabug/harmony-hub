@@ -9,339 +9,314 @@
           rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-/* CSS for Profile Section */
+        /* CSS for Profile Section */
+        .icons {
+            display: flex;
+            align-items: center;
+            position: absolute;
+            right: 16px; /* Adjust as needed to move the icon */
+            top: 10px;
+        }
 
-.icons {
-    display: flex;
-    align-items: center;
-    position: absolute;
-    right: 16px; /* Adjust as needed to move the icon */
-    top: 10px;
-}
+        #user-btn {
+            font-size: 28px;
+            cursor: pointer;
+        }
 
-#user-btn {
-    font-size: 28px;
-    cursor: pointer;
-}
+        #edit-profile-text {
+            margin-left: 8px; 
+            font-size: 16px;
+            color: #333; 
+        }
 
-#edit-profile-text {
-    margin-left: 8px; 
-    font-size: 16px;
-    color: #333; 
-}
+        /* Profile section styles */
+        .profile {
+            display: none; 
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            position: absolute;
+            top: 60px; 
+            right: 20px; 
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
 
-/* Profile section styles */
-.profile {
-    display: none; 
-    background-color: #fff;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    position: absolute;
-    top: 60px; 
-    right: 20px; 
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
+        .profile.active {
+            display: flex; 
+        }
 
-.profile.active {
-    display: flex; 
-}
+        .profile-container {
+            text-align: center;
+            max-width: 300px;
+            margin: 0 auto;
+        }
 
-.profile-container {
-    text-align: center;
-    max-width: 300px;
-    margin: 0 auto;
-}
+        .profile-picture-placeholder {
+            font-size: 60px;
+            color: #ccc;
+            height: 100px; 
+            width: 100px; 
+            overflow: hidden;
+            border-radius: 50%;
+            margin: 20px auto 50px auto; 
+            display: flex; 
+            align-items: center;
+            justify-content: center; 
+        }
 
-.profile-picture-placeholder {
-    font-size: 60px;
-    color: #ccc;
-    height: 100px; 
-    width: 100px; 
-    overflow: hidden;
-    border-radius: 50%;
-    margin: 20px auto 50px auto; 
-    display: flex; 
-    align-items: center;
-    justify-content: center; 
-}
-
-.profile-picture-placeholder img {
+        .profile-picture-placeholder img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-}
+        }
 
-.profile h2 {
-    margin-bottom: 20px;
-    color: #5680E9; 
-}
+        .profile h2 {
+            margin-bottom: 20px;
+            color: #5680E9; 
+        }
 
-.profile p {
-    margin: 20px 0;
-    font-size: 0.9em;
-    color: #555;
-}
+        .profile p {
+            margin: 20px 0;
+            font-size: 0.9em;
+            color: #555;
+        }
 
-.profile a {
-    color: #5680E9;
-    text-decoration: none;
-}
+        .profile a {
+            color: #5680E9;
+            text-decoration: none;
+        }
 
-.profile a:hover {
-    text-decoration: underline;
-}
+        .profile a:hover {
+            text-decoration: underline;
+        }
 
-.profile .form-group {
-    margin-bottom: 20px;
-    text-align: left;
-    width: 100%; 
-}
+        .profile .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+            width: 100%; 
+        }
 
-.profile .form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    font-size: 0.9em;
-}
+        .profile .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
 
-.profile .form-group input[type="text"],
-.profile .form-group input[type="email"],
-.profile .form-group input[type="password"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
+        .profile .form-group input[type="text"],
+        .profile .form-group input[type="email"],
+        .profile .form-group input[type="password"],
+        .profile .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
 
-.profile .form-group .change-password-link {
-    font-size: 0.9em;
-    color: #5680E9;
-    text-decoration: none;
-}
+        .profile .form-group .change-password-link {
+            font-size: 0.9em;
+            color: #5680E9;
+            text-decoration: none;
+        }
 
-.profile .form-group .change-password-link:hover {
-    text-decoration: underline;
-}
+        .profile .form-group .change-password-link:hover {
+            text-decoration: underline;
+        }
 
-.profile .save-changes-btn {
-    padding: 10px 20px;
-    background-color: #5680E9;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    font-size: 1em;
-}
+        .profile .save-changes-btn {
+            padding: 10px 20px;
+            background-color: #5680E9;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1em;
+        }
 
-.profile .save-changes-btn:hover {
-    background-color: #5AB9EA;
-}
+        .profile .save-changes-btn:hover {
+            background-color: #5AB9EA;
+        }
 
-#upload-photo-btn {
-    margin-top: 10px;
-    padding: 10px 20px;
-    background-color: #5680E9;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
+        #upload-photo-btn {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #5680E9;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
 
-#upload-photo-btn:hover {
-    background-color: #5AB9EA;
-}
+        #upload-photo-btn:hover {
+            background-color: #5AB9EA;
+        }
 
-.profile-picture-placeholder img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+        .bento-box-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+        }
 
-.bento-box-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: space-between;
-}
+        .bento-item {
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
 
-.bento-item {
-    background-color: #fff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-}
+        .bento-item.large {
+            flex: 1 1 100%;
+        }
 
-.bento-item.large {
-    flex: 1 1 100%;
-}
+        .bento-item.medium {
+            flex: 1 1 45%;
+        }
 
-.bento-item.medium {
-    flex: 1 1 45%;
-}
+        .bento-item.small {
+            flex: 1 1 30%;
+        }
 
-.bento-item.small {
-    flex: 1 1 30%;
-}
+        /* Info Section Styles */
+        .info-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
 
-.profile-container {
-    max-width: none;
-    text-align: center;
-}
+        .info-section .profile-picture {
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-.profile-picture-placeholder {
-    margin: 20px auto;
-}
+        .info-section .profile-details {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
 
+        .info-section .profile-details h2 {
+            margin: 0 0 10px 0;
+            color: #5680E9; /* Adjust color to match your design */
+            font-size: 1.5em;
+        }
 
-.profile {
-    display: none;
-}
+        .info-section .profile-details p {
+            margin: 0 0 5px 0;
+            font-size: 1em;
+            color: #555;
+        }
 
+        .info-section .profile-details .bio {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #333;
+        }
 
-.profile.active {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
+        .star-rating {
+            display: flex;
+            direction: row-reverse;
+            justify-content: flex-end;
+            font-size: 1.5em;
+        }
 
-/* Info Section Styles */
-.info-section {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    background-color: rgba(255, 255, 255, 0.8); /* Slightly transparent white */
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
-}
+        .star-rating input[type="radio"] {
+            display: none;
+        }
 
-.info-section .profile-picture {
-    border-radius: 50%;
-    width: 120px;
-    height: 120px;
-    object-fit: cover;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+        .star-rating label {
+            color: #ccc;
+            cursor: pointer;
+        }
 
-.info-section .profile-details {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
+        .star-rating input[type="radio"]:checked ~ label {
+            color: #5680E9;
+        }
 
-.info-section .profile-details h2 {
-    margin: 0 0 10px 0;
-    color: #5680E9; /* Adjust color to match your design */
-    font-size: 1.5em;
-}
-
-.info-section .profile-details p {
-    margin: 0 0 5px 0;
-    font-size: 1em;
-    color: #555;
-}
-
-.info-section .profile-details .bio {
-    margin-top: 10px;
-    font-size: 0.9em;
-    color: #333;
-}
-.star-rating {
-    display: flex;
-    direction: row-reverse;
-    justify-content: flex-end;
-    font-size: 1.5em;
-}
-
-.star-rating input[type="radio"] {
-    display: none;
-}
-
-.star-rating label {
-    color: #ccc;
-    cursor: pointer;
-}
-
-.star-rating input[type="radio"]:checked ~ label {
-    color: #5680E9;
-}
-
- .star-rating input[type="radio"]:checked ~ label,
+        .star-rating input[type="radio"]:checked ~ label,
         .star-rating label:hover,
         .star-rating label:hover ~ label {
             color: #5680E9;
         }
-/* Notification icon */
-#notification-btn {
-    font-size: 28px;
-    cursor: pointer;
-    margin-right: 16px; 
-}
 
-/* Notifications section styles */
-.notification-container {
-    position: relative;
-    display: inline-block;
-}
-.notifications-section {
-    display: none; 
-    background-color: #fff;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    position: absolute;
-    top: 60px; 
-    right: 20px; 
-    z-index: 1000;
-    width: 300px; 
-}
+        /* Notification icon */
+        #notification-btn {
+            font-size: 28px;
+            cursor: pointer;
+            margin-right: 16px; 
+        }
 
-.notifications-section.active {
-    display: block; 
-}
-.badge {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    padding: 5px 10px;
-    border-radius: 50%;
-    background-color: red;
-    color: white;
-    font-size: 14px;
-}
-.unread {
-    font-weight: bold;
-    cursor: pointer;
-}
+        /* Notifications section styles */
+        .notification-container {
+            position: relative;
+            display: inline-block;
+        }
 
-.notifications-section ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-}
+        .notifications-section {
+            display: none; 
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            position: absolute;
+            top: 60px; 
+            right: 20px; 
+            z-index: 1000;
+            width: 300px; 
+        }
 
-.notifications-section li {
-    padding: 10px;
-    border-bottom: 1px solid #ccc;
-    cursor: pointer;
-}
+        .notifications-section.active {
+            display: block; 
+        }
 
-.notifications-section li:last-child {
-    border-bottom: none;
-}
+        .badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            padding: 5px 10px;
+            border-radius: 50%;
+            background-color: red;
+            color: white;
+            font-size: 14px;
+        }
 
-</style>
+        .unread {
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .notifications-section ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .notifications-section li {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            cursor: pointer;
+        }
+
+        .notifications-section li:last-child {
+            border-bottom: none;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -352,16 +327,15 @@
                 <i id="notification-btn" class="fas fa-bell"></i>
                 <span id="notification-count" class="badge">0</span>
             </div>
-        <span id="edit-profile-text">Edit Your Profile</span>
-        <i id="user-btn" class="fas fa-user"></i>
-    </div>
+            <span id="edit-profile-text">Edit Your Profile</span>
+            <i id="user-btn" class="fas fa-user"></i>
+        </div>
     </header>
     <div id="notifications" class="notifications-section">
         <!-- Notifications will be dynamically loaded here -->
     </div>
     <div id="main-container">
         <aside class="sidebar" id="sidebar">
-
             <div class="sidebar-header">
                 <i class="fas fa-cloud"></i>
                 <span>Harmony Hub</span>
@@ -379,7 +353,7 @@
             <a href="{{ url_for('logout') }}" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </aside>
 
-        <main class="main-content" id="main-content">
+        <main class="main-content" id="main-content" style="margin-top: 400px;">
             <section class="profile-section">
                 <div class="container">
                     <h1>Welcome, {{ username }}!</h1>
@@ -397,33 +371,31 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="bento-item small">
-                    <h2>Badges & Achievements</h2>
-                    <div id="badgesContent">
-                        <!-- Badges and achievements content will be loaded dynamically -->
-                        <ul>
-                            {% for badge in badges %}
-                            <li>{{ badge }}</li>
-                            {% endfor %}
-                        </ul>
+                    <div class="bento-item small">
+                        <h2>Badges & Achievements</h2>
+                        <div id="badgesContent">
+                            <!-- Badges and achievements content will be loaded dynamically -->
+                            <ul>
+                                {% for badge in badges %}
+                                <li>{{ badge }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
-                    <div class="bento-box-container">
-                        <div class="bento-item medium">
-                            <h2>Favorite Music</h2>
-                            <div id="favoriteMusicContent">
-                                <ul>
-                                    {% for item in favorite_music %}
-                                        <li class="favorite-music-item">
-                                            <img src="{{ item['album_image'] }}" alt="{{ item['name'] }}">
-                                            <a href="{{ item['spotify_url'] }}" target="_blank">
-                                                {{ item['name'] }} - {{ item['artist'] }}
-                                                <i class="fas fa-external-link-alt external-link-icon"></i>
-                                            </a>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
+                    <div class="bento-item medium">
+                        <h2>Favorite Music</h2>
+                        <div id="favoriteMusicContent">
+                            <ul>
+                                {% for item in favorite_music %}
+                                    <li class="favorite-music-item">
+                                        <img src="{{ item['album_image'] }}" alt="{{ item['name'] }}">
+                                        <a href="{{ item['spotify_url'] }}" target="_blank">
+                                            {{ item['name'] }} - {{ item['artist'] }}
+                                            <i class="fas fa-external-link-alt external-link-icon"></i>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
                         </div>
                     </div>
                     <!-- Favorite Movies/Shows Section -->
@@ -447,7 +419,7 @@
                                 <p>No favorite movies/shows added yet.</p>
                             {% endif %}
                         </div>
-                        <form id="favorite-movie-form" >
+                        <form id="favorite-movie-form">
                             <label for="favorite-movie-search">Search and add to favorites:</label>
                             <input type="text" id="favorite-movie-search" name="query" placeholder="Search for a movie or show" required>
                             <button type="submit">Search</button>
@@ -561,59 +533,35 @@
                                     <i class="fas fa-user-circle"></i>
                                 {% endif %}
                             </div>                    
-                                <form id="profile-form" method="post" action="{{ url_for('profile') }}" enctype="multipart/form-data">
-                                    <input type="file" id="upload-photo" name="profile_picture" style="display: none;">
-                                    <button type="button" id="upload-photo-btn">Upload your photo</button>
-                                    <form id="profile-form" method="post" action="{{ url_for('profile') }}" enctype="multipart/form-data">
-                                        <div class="form-group">
-                                            <label for="username">Username</label>
-                                            <input type="text" id="username" name="username" value="{{ user_profile['username'] }}">
-                                            <div class="error-message" id="username-error"></div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="email_address">Email Address</label>
-                                            <input type="email" id="email_address" name="email_address" value="{{ user_profile['email'] }}">
-                                            <div class="error-message" id="email-error"></div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="bio">Bio</label>
-                                            <textarea id="bio" name="bio">{{ user_profile['bio'] }}</textarea>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="current_password">To save changes, please enter your current password</label>
-                                            <input type="password" id="current_password" name="current_password">
-                                        </div>
-                                        <button type="submit" class="save-changes-btn">Save changes</button>
-                                    </form>
-                            </div>
-                            <input type="file" id="upload-photo" style="display: none;">
-                            <button id="upload-photo-btn">Upload your photo</button>
-                            <form id="profile-form">
+                            <form id="profile-form" method="post" action="{{ url_for('profile') }}" enctype="multipart/form-data">
+                                <input type="file" id="upload-photo" name="profile_picture" style="display: none;">
+                                <button type="button" id="upload-photo-btn">Upload your photo</button>
                                 <div class="form-group">
-                                    <label for="full-name">Full Name</label>
-                                    <input type="text" id="full-name" name="full_name" value="">
+                                    <label for="username">Username</label>
+                                    <input type="text" id="username" name="username" value="{{ user_profile['username'] }}">
+                                    <div class="error-message" id="username-error"></div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="email-address">Email Address</label>
-                                    <input type="email" id="email-address" name="email_address" value="">
+                                    <label for="email_address">Email Address</label>
+                                    <input type="email" id="email_address" name="email_address" value="{{ user_profile['email'] }}">
+                                    <div class="error-message" id="email-error"></div>
                                 </div>
                                 <div class="form-group">
-                                    <a href="#" class="change-password-link">Change Password</a>
+                                    <label for="bio">Bio</label>
+                                    <textarea id="bio" name="bio">{{ user_profile['bio'] }}</textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label for="current-password">To save changes, please enter your current
-                                        password</label>
-                                    <input type="password" id="current-password" name="current_password">
+                                    <label for="current_password">To save changes, please enter your current password</label>
+                                    <input type="password" id="current_password" name="current_password">
                                 </div>
                                 <button type="submit" class="save-changes-btn">Save changes</button>
                             </form>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
-    </main>
-</div>
+            </section>
+        </main>
+    </div>
 
     <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
     <script>
@@ -645,19 +593,7 @@
                 })
                 .catch(error => console.error('Error:', error));
             });
-
-        const notificationBtn = document.getElementById('notification-btn');
-        const notificationsSection = document.getElementById('notifications');
-        const notificationBadge = document.getElementById('notification-count');
-
-        notificationBtn.addEventListener('click', function() {
-            notificationsSection.classList.toggle('active');
-            if (notificationsSection.classList.contains('active')) {
-                fetchNotifications();
-            }
         });
-    });
-    
 
     function submitFormAndReload(event) {
         event.preventDefault(); // Prevent the default form submission behavior
@@ -686,6 +622,7 @@
         xhr.send(formData);
     }
 })
-</script>
+    </script>
 </body>
 </html>
+
