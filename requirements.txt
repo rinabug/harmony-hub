@@ -38,7 +38,6 @@ certifi==2021.10.8
 cffi==1.15.0
 chardet==4.0.0
 charset-normalizer==2.0.12
-cinemagoer==2023.5.1
 click==8.1.7
 cloudpickle==2.0.0
 colorama==0.4.4
@@ -287,7 +286,7 @@ sphinxcontrib-serializinghtml==1.1.5
 spotipy==2.24.0
 spyder==5.3.1
 spyder-kernels==2.3.1
-SQLAlchemy==2.0.0
+SQLAlchemy==2.0.16
 stack-data==0.2.0
 statsmodels==0.13.2
 streamlit==1.11.1
