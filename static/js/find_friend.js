@@ -223,11 +223,20 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ request_id: requestId })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             alert(data.message);
             loadFriendRequests();
             loadFriends();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to accept friend request. Please try again.');
         });
     }
 
