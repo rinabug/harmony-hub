@@ -253,12 +253,14 @@ def send_message(conn, sender_id, receiver_id, content):
 def get_messages(conn, user_id, friend_id):
     cursor = conn.cursor()
     cursor.execute('''
-    SELECT m.id, m.sender_id, m.receiver_id, m.content, m.timestamp, m.is_read
-    FROM messages m
-    WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)
-    ORDER BY m.timestamp ASC
+        SELECT m.id, m.sender_id, u.username AS sender_username, m.content, m.timestamp
+        FROM messages m
+        JOIN users u ON m.sender_id = u.id
+        WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)
+        ORDER BY m.timestamp ASC
     ''', (user_id, friend_id, friend_id, user_id))
-    return [dict(row) for row in cursor.fetchall()]
+    messages = cursor.fetchall()
+    return [dict(m) for m in messages]
 
 def mark_messages_as_read(conn, user_id, friend_id):
     cursor = conn.cursor()
