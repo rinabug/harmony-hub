@@ -40,6 +40,7 @@ TMDB_API_KEY='9543dc934149c1e3c3e522690966c634'
 client_id = os.getenv('SPOTIFY_CLIENT_ID')
 client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
 redirect_uri = 'http://localhost:8080/callback'
+
 scope = 'playlist-read-private,user-follow-read,user-top-read,user-read-recently-played'
 
 cache_handler = FlaskSessionCacheHandler(session)
@@ -56,6 +57,7 @@ sp_oauth = SpotifyOAuth(
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 # Flask-Mail configuration using environment variables
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
@@ -86,6 +88,25 @@ def initialize_database():
     create_tables()
     alter_profiles_table()
     conn.close()
+
+# Add this function to insert notifications into the database
+def add_notification(user_id, message):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND message = ? AND is_read = 0",
+        (user_id, message)
+    )
+    count = cursor.fetchone()[0]
+
+    if count == 0:
+        cursor.execute(
+            "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
+            (user_id, message)
+        )
+        conn.commit()
+    conn.close()
+
 
 # Add this function to insert notifications into the database
 def add_notification(user_id, message):
@@ -893,6 +914,25 @@ def ensure_token_validity(token_info):
         token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
         session['token_info'] = token_info
     return token_info
+@app.route('/api/notifications/mark_read', methods=['POST'])
+@app.route('/mark_notification_read', methods=['POST'])
+def mark_notification_read():
+    if 'username' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    notification_id = request.json.get('notification_id')
+    if not notification_id:
+        return jsonify({"error": "Bad Request"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = (SELECT id FROM users WHERE username = ?)",
+        (notification_id, session['username'])
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
 
 @app.route('/mark_notification_read', methods=['POST'])
 def mark_notification_read():
