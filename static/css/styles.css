@@ -1182,3 +1182,75 @@ audio {
 #backToFriendsBtn:hover {
     background-color: #5a6268;
 }
+
+/* Loading Bar Styles */
+.loading-bar {
+    width: 100%;
+    height: 4px;
+    background-color: #e0e0e0;
+    position: relative;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.loading-bar::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: #5680E9; /* Match the button color */
+    animation: loadingAnimation 2s linear infinite;
+}
+
+@keyframes loadingAnimation {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Leaderboard Styles */
+.leaderboard-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    background: #fff;
+    transition: background-color 0.3s;
+}
+
+.leaderboard-item:hover {
+    background-color: #f0f0f0;
+}
+
+.leaderboard-item a {
+    text-decoration: none;
+    color: #5680E9;
+    font-weight: bold;
+}
+
+.leaderboard-item a:hover {
+    text-decoration: underline;
+}
+
+.leaderboard-rank {
+    font-weight: bold;
+    margin-right: 10px;
+    color: #333;
+}
+
+.leaderboard-score {
+    color: #888;
+    font-size: 0.9em;
+}

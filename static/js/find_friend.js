@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+
     function updateFriendsForMessaging(friends) {
         friendsList.innerHTML = '';
         friends.forEach(friend => {
@@ -54,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function startChat(friend) {
-        console.log('Starting chat with friend:', friend);
         currentFriend = friend;
         currentChatFriend.textContent = friend.username;
         chatWindow.style.display = 'block';
@@ -68,27 +68,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadMessages(friendId) {
-        console.log('Loading messages for friend ID:', friendId);
         fetch(`/get_messages/${friendId}`)
             .then(response => response.json())
             .then(data => {
-                console.log('Received messages:', data);
                 messagesList.innerHTML = '';
-                if (data.messages && data.messages.length > 0) {
-                    data.messages.forEach(message => {
-                        console.log('Processing message:', message);
-                        const sender = message[1] === parseInt(userId) ? currentUsername : currentFriend.username;
-                        appendMessage(sender, message[3], new Date(message[4]));
-                    });
-                    scrollToBottom();
-                } else {
-                    console.log('No messages found');
-                    messagesList.innerHTML = '<p>No messages yet.</p>';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading messages:', error);
-                messagesList.innerHTML = '<p>Error loading messages.</p>';
+                data.messages.forEach(message => {
+                    const messageItem = document.createElement('div');
+                    messageItem.classList.add('message-item');
+                    messageItem.classList.add(message.sender_id == currentFriendId ? 'received' : 'sent');
+                    messageItem.innerHTML = `
+                        <div class="sender">${message.sender_username}</div>
+                        <div class="message-content">${message.content}</div>
+                        <div class="timestamp">${new Date(message.timestamp).toLocaleString()}</div>
+                    `;
+                    messagesList.appendChild(messageItem);
+                });
             });
     }
 
@@ -98,13 +92,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         socket = io();
         const room = `${Math.min(userId, friendId)}_${Math.max(userId, friendId)}`;
-        console.log('Joining room:', room);
         socket.emit('join', {username: currentUsername, room: room});
 
         socket.on('new_message', function(data) {
-            console.log('Received new message:', data);
-            appendMessage(data.sender, data.content, new Date(data.timestamp));
-            scrollToBottom();
+            const messageItem = document.createElement('div');
+            messageItem.classList.add('message-item');
+            messageItem.classList.add(data.sender_id == currentFriendId ? 'received' : 'sent');
+            messageItem.innerHTML = `
+                <div class="sender">${data.sender_username}</div>
+                <div class="message-content">${data.content}</div>
+                <div class="timestamp">${new Date(data.timestamp).toLocaleString()}</div>
+            `;
+            messagesList.appendChild(messageItem);
         });
 
         socket.on('user_joined', function(data) {
@@ -120,15 +119,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const messageEl = document.createElement('div');
         messageEl.classList.add('message', sender === currentUsername ? 'sent' : 'received');
         
-        const senderEl = document.createElement('span');
+        const senderEl = document.createElement('div');
         senderEl.classList.add('sender');
-        senderEl.textContent = sender + ': ';
+        senderEl.textContent = sender;
         
-        const contentEl = document.createElement('span');
+        const contentEl = document.createElement('div');
         contentEl.classList.add('content');
         contentEl.textContent = content;
         
-        const timeEl = document.createElement('span');
+        const timeEl = document.createElement('div');
         timeEl.classList.add('timestamp');
         timeEl.textContent = formatTimestamp(timestamp);
         
@@ -137,8 +136,9 @@ document.addEventListener('DOMContentLoaded', function() {
         messageEl.appendChild(timeEl);
         
         messagesList.appendChild(messageEl);
+        scrollToBottom();
     }
-    window.setCurrentUserData = setCurrentUserData;
+    //window.setCurrentUserData = setCurrentUserData;
 
     function formatTimestamp(date) {
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -146,6 +146,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function scrollToBottom() {
         messagesList.scrollTop = messagesList.scrollHeight;
+    }
+
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (message && currentFriend) {
+            const room = `${Math.min(userId, currentFriend.id)}_${Math.max(userId, currentFriend.id)}`;
+            socket.emit('send_message', {
+                sender: currentUsername,
+                receiver: currentFriend.username,
+                message: message,
+                room: room
+            });
+            messageInput.value = '';
+        }
     }
 
     sendMessageBtn.addEventListener('click', sendMessage);
@@ -164,21 +178,6 @@ document.addEventListener('DOMContentLoaded', function() {
         currentFriend = null;
         messagesList.innerHTML = '';
     });
-
-    function sendMessage() {
-        const message = messageInput.value.trim();
-        if (message && currentFriend) {
-            console.log('Sending message:', message);
-            const room = `${Math.min(userId, currentFriend.id)}_${Math.max(userId, currentFriend.id)}`;
-            socket.emit('send_message', {
-                sender: currentUsername,
-                receiver: currentFriend.username,
-                message: message,
-                room: room
-            });
-            messageInput.value = '';
-        }
-    }
 
     function loadFriendRequests() {
         fetch('/get_friend_requests')
@@ -223,11 +222,20 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ request_id: requestId })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             alert(data.message);
             loadFriendRequests();
             loadFriends();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to accept friend request. Please try again.');
         });
     }
 
@@ -306,6 +314,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial load
     loadFriends();
     loadFriendRequests();
+    window.setCurrentUserData = setCurrentUserData;
 });
 
 document.addEventListener('DOMContentLoaded', function() {

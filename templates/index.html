@@ -33,16 +33,19 @@
             <a href="{{ url_for('logout') }}" class="logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
         </aside>
 
-        <main class="main-content" id="main-content" style="margin-top: 600px;">
+        <main class="main-content" id="main-content" style="margin-top: 400px;">
             <section class="welcome-section">
                 <div class="container">
                     <h1>Welcome, {{ username }}!</h1>
                     <p>This is your personalized user home page.</p>
                 </div>
             </section>
+
+            <!-- Loading Bar -->
+            <div id="loadingBar" class="loading-bar" style="display: none;">Loading...</div>
         
             <!-- Bento-box sections -->
-            <section class="bento-box-section">
+            <section class="bento-box-section" id="bentoBoxSection" style="display: none;">
                 <div class="bento-box-container">
                     <div class="bento-item small">
                         <h2>Featured Playlists</h2>
@@ -102,6 +105,7 @@
                                                 </audio>
                                             {% endif %}
                                             <a href="{{ track.external_url }}" target="_blank" class="spotify-link">Open in Spotify</a>
+                                            <button class="add-to-liked-songs button" data-track-id="{{ track.id }}">Add to Liked Songs</button>
                                         </div>
                                     {% endfor %}
                                 </div>
@@ -150,6 +154,8 @@
             const mainContainer = document.getElementById('main-container');
             const mainContent = document.getElementById('main-content');
             const header = document.querySelector('header');
+            const bentoBoxSection = document.getElementById('bentoBoxSection');
+            const loadingBar = document.getElementById('loadingBar');
 
             menuToggle.addEventListener('click', function() {
                 sidebar.classList.toggle('open');
@@ -157,8 +163,52 @@
                 mainContent.classList.toggle('expanded');
                 header.classList.toggle('expanded');
             });
+            const addToLikedButtons = document.querySelectorAll('.add-to-liked-songs');
+            addToLikedButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const trackId = this.getAttribute('data-track-id');
+                    addToLikedSongs(trackId);
+                });
+            });
+
+            // Show loading bar
+            loadingBar.style.display = 'block';
+
+            // Hide bento-box section initially
+            bentoBoxSection.style.display = 'none';
+
+            // Wait for everything to load
+            window.onload = function() {
+                // Hide loading bar
+                loadingBar.style.display = 'none';
+
+                // Show bento-box section
+                bentoBoxSection.style.display = 'block';
+            };
         });
-        
+
+        function addToLikedSongs(trackId) {
+            fetch('/add_to_liked_songs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ track_id: trackId }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Song added to your Liked Songs!');
+                } else {
+                    alert('Failed to add song to Liked Songs. Please try again.');
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        } 
     </script>
 </body>
 </html>
+

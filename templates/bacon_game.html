@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Collab</title>
+    <title>Bacon Game</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -11,7 +11,7 @@
 <body>
     <header>
         <button class="menu-toggle" id="menu-toggle">&#9776;</button>
-        <h1>Harmony Hub</h1>
+        <h1>Harmony Hub - Bacon Game</h1>
     </header>
 
     <div id="main-container">
@@ -34,52 +34,21 @@
         </aside>
 
         <main class="main-content" id="main-content">
-            <section class="collab-section">
+            <section class="bacon-game-section">
                 <div class="container">
-                    <h1>Collab</h1>
-                    <p>Create and connect with friends</p>
-                </div>
-            </section>
-
-            <!-- Bento-box sections -->
-            <section class="bento-box-section">
-                <div class="bento-box-container">
-                    <div class="bento-item small">
-                        <h2>Created Playlists</h2>
-                        <div class="created-playlists">
-                            <ul>
-                                {% for playlist in playlists %}
-                                <li class="playlist-item">
-                                    <a href="{{ playlist.url }}" target="_blank">{{ playlist.name }} <i class="fas fa-external-link-alt"></i></a>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="bento-item small">
-                        <h2>Playlists Collab</h2>
-                        <div id="featuredPlaylistsContent">
-                            <a href="{{ url_for('collab_input') }}" class="playlist-collab-button button">Create your own Playlist Collab</a>
-                            <a href="{{ url_for('request_playlist_input') }}" class="playlist-request-button button">Join Collab Playlist</a>
-                        </div>
-                    </div>
-                    <!--
-                    <div class="bento-item medium">
-                        <h2>Movie Watch-Party</h2>
-                        <div id="topChartsContent">
-                        </div>
-                    </div>
-                    <div class="bento-item large">
-                        <h2>Show Watch-Party</h2>
-                        <div id="recommendationsContent">
-                        </div> -->
-                    </div>
+                    <h1>WELCOME TO THE BACON GAME</h1>
+                    <h2>Given these 2 artists: {{ my_variable[0] }} and {{ my_variable[1] }}, what is the shortest way they would connect via a series of songs?</h2>
+                    <form action="{{ url_for('bacon_input') }}" method="POST">
+                        <label for="answer">Your Answer:</label>
+                        <input type="text" id="answer" name="answer" required>
+                        <button type="submit" class="button">Submit Answer</button>
+                    </form>
                 </div>
             </section>
         </main>
     </div>
 
-    <script src="{{ url_for('static', filename='js/collab.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const menuToggle = document.getElementById('menu-toggle');

@@ -54,6 +54,13 @@ def create_tables():
         FOREIGN KEY (friend_id) REFERENCES users (id)
     );
                          
+    CREATE TABLE IF NOT EXISTS leaderboard (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    score INTEGER DEFAULT 0,
+    FOREIGN KEY (username) REFERENCES users(username)
+    );
+                         
     CREATE TABLE IF NOT EXISTS movie_ratings (
         user_id INTEGER NOT NULL,
         movie_id INTEGER NOT NULL,
@@ -253,12 +260,14 @@ def send_message(conn, sender_id, receiver_id, content):
 def get_messages(conn, user_id, friend_id):
     cursor = conn.cursor()
     cursor.execute('''
-    SELECT m.id, m.sender_id, m.receiver_id, m.content, m.timestamp, m.is_read
-    FROM messages m
-    WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)
-    ORDER BY m.timestamp ASC
+        SELECT m.id, m.sender_id, u.username AS sender_username, m.content, m.timestamp
+        FROM messages m
+        JOIN users u ON m.sender_id = u.id
+        WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?)
+        ORDER BY m.timestamp ASC
     ''', (user_id, friend_id, friend_id, user_id))
-    return [dict(row) for row in cursor.fetchall()]
+    messages = cursor.fetchall()
+    return [dict(m) for m in messages]
 
 def mark_messages_as_read(conn, user_id, friend_id):
     cursor = conn.cursor()
@@ -272,3 +281,59 @@ def mark_messages_as_read(conn, user_id, friend_id):
         return True
     except sqlite3.Error:
         return False
+    
+# ##Playlist Collab Stuff###################
+    
+def send_playlist_request(conn, sender_username, receiver_username, playlist_id):
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+        INSERT INTO playlist_requests (sender_username, receiver_username, playlist_id, status)
+        VALUES (?, ?, ?, 'pending')
+        ''', (sender_username, receiver_username, playlist_id))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+
+def accept_playlist_request(conn, sender_username, reciever_username, playlist_id):
+    cursor = conn.cursor()
+    try:
+        # Update the friend request status
+        cursor.execute('''
+        UPDATE playlist_requests
+        SET status = 'accepted'
+        WHERE sender_username = ? AND receiver_username = ? AND playlist_id = ?
+        ''', (sender_username, reciever_username, playlist_id))
+        
+        # Add entries to the friends table
+        cursor.execute('''
+        INSERT INTO playlists (sender_username, playlist_id)
+        VALUES (?, ?)
+        ''', (sender_username, playlist_id))
+        
+        conn.commit()
+        return True
+    except sqlite3.Error:
+        conn.rollback()
+        return False
+
+def reject_playlist_request(conn,sender_username, reciever_username, playlist_id):
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+        UPDATE playlist_requests
+        SET status = 'rejected'
+        WHERE sender_username = ? AND receiver_username = ? AND playlist_id = ?
+        ''', (sender_username, reciever_username, playlist_id))
+        conn.commit()
+        return True
+    except sqlite3.Error:
+        return False
+
+def get_pending_playlist_requests(conn, username):
+    cursor = conn.cursor()
+    cursor.execute('''
+    SELECT * FROM playlists WHERE username = ? and status = 'pending'
+    ''', (username,))
+    return cursor.fetchall()

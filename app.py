@@ -14,7 +14,7 @@ from backend.user_auth import (
     is_valid_email, is_valid_password, set_reset_token, get_user_by_reset_token, reset_password, 
     alter_profiles_table, get_user_id_by_username, get_pending_friend_requests, get_friends, 
     send_friend_request, accept_friend_request, reject_friend_request, send_message, 
-    get_messages, mark_messages_as_read
+    get_messages, mark_messages_as_read, send_playlist_request
 )
 from backend.concert_recommendations import get_concert_recommendations
 from backend.music_recommendation import get_music_recommendations
@@ -24,6 +24,13 @@ from backend.spotify_utils import extract_top_genres, genre_mapping
 
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from datetime import datetime
+
+
+from backend.trivia import create_leaderboard_table, update_score, get_leaderboard, get_friends_leaderboard, generate_trivia_question
+import openai
+from openai import OpenAI
+from random import randint
+import random
 
 
 app = Flask(__name__)
@@ -41,7 +48,7 @@ client_id = os.getenv('SPOTIFY_CLIENT_ID')
 client_secret = os.getenv('SPOTIFY_CLIENT_SECRET')
 redirect_uri = 'http://localhost:8080/callback'
 
-scope = 'playlist-read-private,user-follow-read,user-top-read,user-read-recently-played'
+scope = 'playlist-read-private,playlist-modify-public,playlist-modify-private,user-follow-read,user-top-read,user-read-recently-played,user-library-modify,user-library-read'
 
 cache_handler = FlaskSessionCacheHandler(session)
 
@@ -87,6 +94,7 @@ def initialize_database():
     conn = get_db_connection()
     create_tables()
     alter_profiles_table()
+    create_leaderboard_table(conn)
     conn.close()
 
 # Add this function to insert notifications into the database
@@ -181,20 +189,36 @@ def index():
     try:
         token_info = ensure_token_validity(token_info)
         sp = Spotify(auth=token_info['access_token'])
-        playlists = sp.current_user_playlists(limit=5)
-        playlists_info = [(pl['name'], pl['images'][0]['url'], pl['external_urls']['spotify']) for pl in playlists['items']]
+        
+        # Fetch user's playlists
+        playlists = sp.current_user_playlists(limit=10)
+        #print("Playlists response:", json.dumps(playlists, indent=2))  # Debugging line
+        playlists_info = []
+        if playlists and 'items' in playlists:
+            for pl in playlists['items']:
+                if 'name' in pl and 'images' in pl and pl['images'] and 'external_urls' in pl:
+                    playlists_info.append((pl['name'], pl['images'][0]['url'], pl['external_urls']['spotify']))
+                else:
+                    print(f"Missing or None keys in playlist item: {pl}")  # Debugging line
 
         # Fetch featured playlists for top charts section
         top_charts = sp.featured_playlists(limit=10)
-        top_charts_info = [(pl['name'], pl['images'][0]['url'], pl['external_urls']['spotify']) for pl in top_charts['playlists']['items']]
+        print("Top charts response:", json.dumps(top_charts, indent=2))  # Debugging line
+        top_charts_info = []
+        if top_charts and 'playlists' in top_charts and 'items' in top_charts['playlists']:
+            for pl in top_charts['playlists']['items']:
+                if 'name' in pl and 'images' in pl and pl['images'] and 'external_urls' in pl:
+                    top_charts_info.append((pl['name'], pl['images'][0]['url'], pl['external_urls']['spotify']))
+                else:
+                    print(f"Missing or None keys in top chart item: {pl}")  # Debugging line
 
-        #music recommendations
+        # Music recommendations
         music_recommendations = get_music_recommendations(sp)
 
         # Fetch recently played tracks
         recently_played_tracks = get_recently_played_tracks(sp)
 
-        #movie rec based on listening history
+        # Movie recommendations based on listening history
         top_genres = extract_top_genres(sp)
         movie_genres = [genre_mapping.get(genre, 'Drama') for genre in top_genres]
         if movie_genres:
@@ -214,6 +238,9 @@ def index():
                            music_recommendations=music_recommendations, 
                            recently_played_tracks=recently_played_tracks,
                            movie_recommendations=movie_recommendations)
+
+
+
     
 def generate_movie_recommendations(favorite_movies, recently_watched):
     # For simplicity, we use genres from favorite and recently watched movies
@@ -669,7 +696,6 @@ def get_messages_route(friend_id):
 
 @socketio.on('send_message')
 def handle_message(data):
-    print("Received message:", data)
     sender = data['sender']
     receiver = data['receiver']
     content = data['message']
@@ -686,12 +712,13 @@ def handle_message(data):
             'id': message_id,
             'sender_id': sender_id,
             'receiver_id': receiver_id,
+            'sender_username': sender,
             'content': content,
             'timestamp': datetime.now().isoformat()
         }, room=room)
-        print(f"Message sent to room {room}")
     else:
         emit('error', {'msg': 'Failed to send message'}, room=request.sid)
+
 
 @socketio.on('join')
 def on_join(data):
@@ -707,6 +734,7 @@ def on_leave(data):
     leave_room(room)
     emit('user_left', {'username': username}, room=room)
 
+#end of messaging
 
 @app.route('/user/<username>')
 def user_profile(username):
@@ -880,11 +908,6 @@ def get_movie_ratings(user_id):
     return {rating['movie_id']: rating['rating'] for rating in ratings}
 
 
-
-@app.route('/collab')
-def collab():
-    return render_template('collab.html')
-
 @app.route('/game')
 def game():
     return render_template('game.html')
@@ -967,5 +990,244 @@ def fetch_spotify_data(sp):
 
     return favorite_music, recently_played_tracks
 
+#trivia
+@app.route('/get_global_leaderboard')
+def get_global_leaderboard_route():
+    conn = get_db_connection()
+    leaderboard = get_leaderboard(conn)
+    conn.close()
+    return jsonify(leaderboard)
+
+@app.route('/get_friends_leaderboard')
+def get_friends_leaderboard_route():
+    if 'username' not in session:
+        return jsonify([])
+    
+    conn = get_db_connection()
+    leaderboard = get_friends_leaderboard(conn, session['username'])
+    conn.close()
+    return jsonify(leaderboard)
+
+@app.route('/get_trivia_question')
+def get_trivia_question():
+    if 'username' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+    
+    if 'token_info' not in session:
+        return jsonify({'error': 'Spotify authentication required'}), 400
+    
+    token_info = session.get('token_info')
+    token_info = ensure_token_validity(token_info)  # Ensure the token is valid
+    sp = Spotify(auth=token_info['access_token'])
+    
+    try:
+        # Fetch user's top artists
+        top_artists = sp.current_user_top_artists(limit=10, time_range='medium_term')['items']
+        artist_names = [artist['name'] for artist in top_artists]
+        
+        # Fetch user's recently played tracks for more variety
+        recent_tracks = sp.current_user_recently_played(limit=20)['items']
+        recent_artists = list(set([track['track']['artists'][0]['name'] for track in recent_tracks]))
+        
+        # Combine and shuffle the artists
+        all_artists = list(set(artist_names + recent_artists))
+        random.shuffle(all_artists)
+        
+        asked_questions = session.get('asked_questions', [])
+        question_data = generate_trivia_question(all_artists, asked_questions)
+        
+        if question_data:
+            session['asked_questions'] = asked_questions + [question_data['question']]
+            session['current_question'] = question_data
+            return jsonify(question_data)
+        else:
+            return jsonify({'error': 'Failed to generate question'}), 500
+    except Exception as e:
+        print(f"Error generating trivia question: {e}")
+        return jsonify({'error': 'Error generating trivia question'}), 500
+
+@app.route('/answer_trivia', methods=['POST'])
+def answer_trivia():
+    if 'username' not in session or 'current_question' not in session:
+        return jsonify({'error': 'Invalid session'}), 400
+
+    data = request.get_json()
+    user_answer = data.get('answer')
+    current_question = session['current_question']
+
+    if user_answer == current_question['correct_answer']:
+        conn = get_db_connection()
+        update_score(conn, session['username'], 1)
+        conn.close()
+        result = {'status': 'correct', 'message': 'Correct answer!', 'correct_answer': current_question['correct_answer']}
+    else:
+        result = {'status': 'incorrect', 'message': f"Wrong answer. The correct answer was {current_question['correct_answer']}.", 'correct_answer': current_question['correct_answer']}
+
+    return jsonify(result)
+
+
+#collab stuff
+@app.route('/collab')
+def collab():
+    if 'username' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
+    # Fetch playlists from session (or from a database)
+    playlists = session.get('playlists', [])
+
+    return render_template('collab.html', playlists=playlists)
+
+
+@app.route('/collab_input', methods=['GET', 'POST'])
+def collab_input():
+    return render_template('collab_input.html')
+
+@app.route('/create_collab', methods=['POST'])
+def create_collab():
+    if 'username' not in session:
+        flash("Please log in to your account first.")
+        return redirect(url_for('login'))
+    
+    token_info = session.get('token_info', None)
+    if not token_info:
+        flash("Please connect your Spotify account.")
+        return redirect(url_for('loginSpotify'))
+
+    try:
+        token_info = ensure_token_validity(token_info)
+        sp = Spotify(auth=token_info['access_token'])
+        user_id = sp.current_user()['id']
+        playlist_name = request.form['playlist_name']
+        playlist_description = "A new collaborative playlist"
+        new_playlist = sp.user_playlist_create(user_id,
+                                               name=playlist_name,
+                                               public=True,
+                                               collaborative=True,
+                                               description=playlist_description)
+        playlist_id = new_playlist['id']
+        playlist_url = new_playlist['external_urls']['spotify']
+        playlist_name = new_playlist['name']
+
+        # Store playlist details in the session (or in a database)
+        if 'playlists' not in session:
+            session['playlists'] = []
+        session['playlists'].append({
+            'name': playlist_name,
+            'url': playlist_url
+        })
+
+        flash("Collaborative playlist created successfully.", 'success')
+    except Exception as e:
+        flash(f"An error occurred: {e}", 'danger')
+    
+    return redirect(url_for('collab'))
+
+
+@app.route('/request_playlist_input')
+def request_playlist_input():
+    return render_template('request_playlist_input.html')
+
+@app.route('/join_playlist', methods=['POST','GET'])
+def join_playlist():
+    conn = get_db_connection()
+    sender_username= request.form['sender_username']
+    receiver_username = request.form['receiver_username']
+    playlist_id = request.form['playlist_id']
+    sp = Spotify(auth_manager=sp_oauth)
+    sp.current_user_follow_playlist(playlist_id)
+    return redirect(url_for('collab'))
+    # if not sender_username:
+    #     conn.close()
+    #     return jsonify({'error': 'User not found'}), 404
+    
+    # try:
+    #     success = send_playlist_request(conn, sender_username, receiver_username, playlist_id)
+    #     conn.close()
+        
+    #     if success:
+    #         return jsonify({'message': 'Playlist request sent'}), 200
+    #     else:
+    #         return jsonify({'error': 'Failed to send Playlist request'}), 400
+    # except Exception as e:
+    #     conn.close()
+    #     print(f"Error sending friend request: {str(e)}")
+    #     return jsonify({'error': 'An unexpected error occurred'}), 500
+
+#add to liked songs
+
+@app.route('/add_to_liked_songs', methods=['POST'])
+def add_to_liked_songs():
+    if 'username' not in session:
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+    
+    if 'token_info' not in session:
+        return jsonify({'success': False, 'error': 'Spotify authentication required'}), 400
+    
+    token_info = session.get('token_info')
+    token_info = ensure_token_validity(token_info)
+    sp = Spotify(auth=token_info['access_token'])
+    
+    track_id = request.json.get('track_id')
+    if not track_id:
+        return jsonify({'success': False, 'error': 'No track ID provided'}), 400
+    
+    try:
+        sp.current_user_saved_tracks_add([track_id])
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error adding track to liked songs: {e}")
+        return jsonify({'success': False, 'error': 'Failed to add track to liked songs'}), 500
+    
+
+#bacon game
+@app.route('/bacon_game')
+def bacon_game():
+    return render_template('bacon_game.html', my_variable="example")
+
+@app.route('/bacon_input', methods=['POST'])
+def bacon_input():
+    token_info = session.get('token_info')
+    token_info = ensure_token_validity(token_info)  # Ensure the token is valid
+    sp = Spotify(auth=token_info['access_token'])
+
+    songs = sp.current_user_recently_played()
+    songs_filt = [(song['track']['artists']) for song in songs['items']]
+    #songs_filt = [(song['artists']) for song in songs['items']['track']['artists']]
+    last_artist= list()
+    last_song_name=[(song['track']['name']) for song in songs['items']]
+    for artist in songs_filt:
+        for item in artist:
+            name= item["name"]
+            last_artist.append(name) #list of the names of the last 50 artists you listned to
+
+    OPENAI_API_KEY = os.getenv('OPENAI_KEY')
+    client = OpenAI(api_key=OPENAI_API_KEY)
+
+
+    def ask_api(prompt):
+    # Specify the model to use and the messages to send
+        completion = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": 'You are a straight forward examiner'},
+                {"role": "system", "content": prompt},
+            ]
+        )
+        return(completion.choices[0].message.content)
+    
+    index= randint(0,50)
+    prompt= (f'Using this artist {last_artist[index]},come up with just the name of another')
+    question=[last_artist[index], prompt]
+    prompt=(f'Given these 2 artists {question}, what is the shortest path to connect them to get from 1 to the other '
+            f'via artists who are connected by a song between, what is the path? ')
+    answer= ask_api(prompt)
+    attempt = request.form.get('answer')
+    if answer!= attempt:
+        return jsonify({'message': 'WRONG, your answer was {answer}'}), 200
+
+    return render_template('bacon_game.html', my_variable= question)
+    
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
+    

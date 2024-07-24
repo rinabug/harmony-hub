@@ -7,6 +7,7 @@ def get_music_recommendations(sp: Spotify, limit=10):
     formatted_recommendations = []
     for track in recommendations['tracks']:
         formatted_recommendations.append({
+            'id': track['id'], #added
             'name': track['name'],
             'artist': track['artists'][0]['name'],
             'album': track['album']['name'],
